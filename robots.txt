@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://estebanetayo.es/sitemap.xml

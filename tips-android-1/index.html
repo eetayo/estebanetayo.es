@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tips Android #1 · Esteban Etayo</title>
+<meta name="description" content="En esta entrada voy a comenzar una nueva serie de post donde voy a daros consejos de cómo solucionar varios problemas con los que me he encontrado al desarrollar bajo la…">
+<link rel="canonical" href="https://estebanetayo.es/tips-android-1/">
+<meta property="og:title" content="Tips Android #1 · Esteban Etayo">
+<meta property="og:description" content="En esta entrada voy a comenzar una nueva serie de post donde voy a daros consejos de cómo solucionar varios problemas con los que me he encontrado al desarrollar bajo la…">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://estebanetayo.es/tips-android-1/">
+<meta property="og:image" content="https://estebanetayo.es/media/2011/10/cicloaplicacion.png"><meta name="theme-color" content="#f3ecdf">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,620&family=Outfit:wght@400;500;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/css/site.css">
+</head>
+<body>
+<a class="skip" href="#contenido">Saltar al contenido</a>
+<header class="mast"><div class="mast-inner"><a class="brand" href="/"><span class="monogram">EE</span><span>Esteban Etayo</span></a><nav class="nav" aria-label="Secciones"><a href="/">Archivo</a><a href="/sobre-mi/">Sobre mí</a><a href="/contactar/">Contacto</a><a href="/mis-aplicaciones/">Aplicaciones</a><a href="/temas/">Temas</a></nav><form class="finder" action="/" method="get" role="search"><label class="sr-only" for="q">Buscar en el archivo</label><input id="q" name="q" type="search" placeholder="Buscar en el archivo" autocomplete="off"></form></div></header><main id="contenido" class="wrap"><article><header class="post-head"><p class="cats"><a class="cat-link" href="/tema/android/">Android</a> </p><h1>Tips Android #1</h1><p class="byline">1 de octubre de 2011 · 2 minutos de lectura</p></header><div class="prose"><p>En esta entrada voy a comenzar una nueva serie de post donde voy a daros consejos de cómo solucionar varios problemas con los que me he encontrado al desarrollar bajo la plataforma Android, mostrando las soluciones que he ido tomando en cada caso. Espero que os sirva para perder menos tiempo que el que he perdido yo para ir superando cada obstáculo.</p><p><strong>1) Control de una aplicación Android al pulsar boton HOME o BACK</strong></p><p>La única solución de solventar esta tarea de manera correcta es tener presente todo el tiempo el ciclo de actividad que tiene una actividad Android.</p><p><a href="/media/2011/10/cicloaplicacion.png"><img alt="cicloaplicacion" loading="lazy" src="/media/2011/10/cicloaplicacion.png" width="545"/></a></p><p>Cada vez que el usuario pulsa el teclado se ejecuta el siguiente metodo <strong>onKeyDown</strong> , que podemos sobreescribir y poder controlar cualquier pulsación. </p><pre>public boolean backButton = false;
+public boolean homeButton = false;
+
+@Override
+public boolean onKeyDown(int keyCode, KeyEvent event) {
+	    if (keyCode == KeyEvent.KEYCODE_BACK) {
+	    	backButton = true;
+	     	finish();
+	     return true;
+	    }else if(keyCode == KeyEvent.KEYCODE_HOME){
+	    	homeButton = true;
+	    }
+	    return super.onKeyDown(keyCode, event);
+}</pre><p> Cuando el usuario pulsa el botón HOME o el boton BACK, la actividad entra en modo Pausa por tanto se ejecuta el siguiente método, que puedes controlar de la siguiente manera: </p><pre>@Override 
+public void onPause(){
+	    super.onPause();
+	    Log.v("TAG", "onPause" );
+	    if(backButton){
+	        //Aquí controlamos el boton BACK
+	    }else if(homeButton){
+	        //Aquí controlamos el boton HOME
+	    }
+	   backButton = false;
+   homeButton = false;
+}</pre><p> Esto es muy útil para cantidad de cosas, como por ejemplo apagar la música del juego, grabar el estado actual del juego, etc…Tenemos que tener claro que cuando se vuelva a ejecutar nuevamente el juego, pasará al estado “Resume”, donde debemos recuperar la situación que teníamos antes del Pause. </p><pre>@Override 
+public void onResume(){
+	    super.onResume();
+	    //Aquí añadiremos la situación a recuperar
+}</pre><p><strong>2) Creación de un componente totalmente personalizado.</strong> Aqui os muestro un ejemplo de como podemos crear un boton, asignarle un layout, una fuente, un color, una imagen y todo lo que necesitemos para personalizar nuestros TextView, ImageView, Button y cualquier otra Views. </p><pre>Typeface tf = Typeface.createFromAsset(this.getAssets(),"font/nombreFuente.ttf");
+Button btnEjemplo = new Button(this); //creación boton
+btnEjemplo.setTextSize(30);//tamaño texto
+btnEjemplo.setGravity(Gravity.CENTER); //punto de gravedad
+btnEjemplo.setWidth((int)(250*this.getResources().getDisplayMetrics().density)); //anchura boton dependiente de la resolucion pantalla
+btnEjemplo.setTextColor(Color.WHITE); //color de texto
+FrameLayout.LayoutParams layoutParamsEjemplo = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.CENTER_HORIZONTAL); //creación de posicionamiento para fijar el nuevo layOut
+layoutParamsEjemplo.setMargins(0, (int)(40*getResources().getDisplayMetrics().density), 0, 0); //asignación de margenes
+btnEjemplo.setLayoutParams(layoutParamsEjemplo);  //asignación del layOut al boton
+btnEjemplo.setTypeface(tf); //asignacion de la fuente al boton
+btnEjemplo.setShadowLayer(3, 0, 0, Color.BLACK); //asignación de la sombra al texto del boton
+btnEjemplo.setBackgroundDrawable(getResources().getDrawable(R.drawable.NombreImagen));
+btnEjemplo.setOnClickListener(new OnClickListener() {
+         @Override
+	public void onClick(View v) {
+	//pulsacion del boton
+        }
+});</pre></div><nav class="post-nav" aria-label="Más entradas"><a href="/¿como-monetizar-aplicaciones-moviles-¿quien-tiene-la-respuesta/"><span class="label">Anterior</span><strong>¿Cómo monetizar aplicaciones móviles? ¿Quién tiene la respuesta?</strong></a><a class="next" href="/ponencia-sobre-cloud-computing-¡muy-buena/"><span class="label">Siguiente</span><strong>Ponencia sobre Cloud Computing: ¡Muy Buena!</strong></a></nav><section class="comments"><h2>Comentarios</h2><article class="comment"><p class="who"><b>Marta</b> · 11 de diciembre de 2011</p><p>Buenas!</p><p>Soy nueva con Android y Java, pero estoy haciendo una aplicación y tengo un par de problemas: Necesito crear un botón Home y un Back Button en pantalla. El problema es que al parecer me quedo estancada en la actividad, pero no sé cómo solucionarlo.</p><p>Había creado un par de clases asociadas a esos botones, pero como te digo, esto no chuta.. :( Paso a la ventana anterior y se acabó! No me deja pulsar los botones de las ventanas anteriores...</p><p>Puedes echarme una mano, por favor???</p><p>Saludos!</p></article><article class="comment"><p class="who"><b>eetayo</b> · 11 de diciembre de 2011</p><p>Vale, te hecho una mano. Pero necesito que me des mas detalles y/o que me envies el proyecto. mi mail: eetayo@gmail.com</p></article><article class="comment"><p class="who"><b>Marta</b> · 12 de diciembre de 2011</p><p>Hey, buenas!!</p><p>Muchísimas gracias por tu ayuda, pero al final lo he solucionado!! :D</p><p>Me temo que ayer, después de horas y horas programando la aplicación, acabé hipersaturada... Había cometido un error de sintaxis con el intent y por eso no funcionaba...</p><p>Perdón por las molestias y gracias de nuevo! :)</p></article><article class="comment"><p class="who"><b>eetayo</b> · 12 de diciembre de 2011</p><p>Genial!! Así es como mas se aprende!! Un Saludo!!</p></article><article class="comment"><p class="who"><b>Miguel Angel</b> · 13 de enero de 2012</p><p>Hola muchas gracias por el crear el blog desde aquí tienes un nuevo seguidor. Bueno le iba a consultar una duda por si usted sabría como resolverla viene al hilo del botón back (me indique el camino sino no aprendemos :) ). Tengo en mi PFC una aplicación que tiene varias pantallas y claro la pila va aumentando ya que no elimino ninguna. Mi objetivo es guardar sólo la última pantalla para poder regresar a ella a través del back (esto es por defecto) pero no consigo saber como guardar esa pantalla. Me explico con un ejemplo: ACTUALMENTE: voy de pantalla 1 -&gt; pantalla 2 -&gt; pantalla 3 tengo en pila las 3 pantallas, con el back voy de la 3 a la 2 y para finalizar a la 1</p><p>Objetivo que al llegar a la pantalla 3 desaparezca de la pila la pantalla 1 ya que tengo la 2 en pila</p><p>Saludos y gracias de antemano.</p></article><article class="comment"><p class="who"><b>eetayo</b> · 14 de enero de 2012</p><p>Hola Miguel Angel, Muchas gracias por seguirme. La verdad que no termino de entender el porque quieres hacer eso, no le veo demasiado sentido el cargarte de la pila la Pantalla1 cuando llegues a la pantalla3. El sistema guarda una referencia de la actividad que apenas tiene consumo sobre el procesamiento global. Solo has de eliminar de la pila la referencia con finish(); cuando pasas de la pantalla3 a la pantalla2</p><p>Un Saludo!</p></article></section><script type="application/ld+json">{"@context": "https://schema.org", "@type": "BlogPosting", "headline": "Tips Android #1", "datePublished": "2011-10-01T21:00:57", "inLanguage": "es", "author": {"@type": "Person", "name": "Esteban Etayo"}, "url": "https://estebanetayo.es/tips-android-1/", "image": "https://estebanetayo.es/media/2011/10/cicloaplicacion.png"}</script></article></main><footer class="footer"><p>Archivo de estebanetayo.es, recuperado con los textos originales. Publicado entre 16 de junio de 2009 y 17 de marzo de 2014. Diseño nuevo.</p></footer><dialog id="lightbox"><img alt=""></dialog>
+<script src="/assets/js/site.js"></script>
+</body>
+</html>

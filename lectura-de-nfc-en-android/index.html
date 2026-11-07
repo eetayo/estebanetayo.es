@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lectura de NFC en Android · Esteban Etayo</title>
+<meta name="description" content="Para introduzirte a NFC, comienza leyendo el post anterior Cada tag o etiqueta NFC puede guardar contenido diverso en su interior segun el formato NDEF, lo mas habitual es guardar…">
+<link rel="canonical" href="https://estebanetayo.es/lectura-de-nfc-en-android/">
+<meta property="og:title" content="Lectura de NFC en Android · Esteban Etayo">
+<meta property="og:description" content="Para introduzirte a NFC, comienza leyendo el post anterior Cada tag o etiqueta NFC puede guardar contenido diverso en su interior segun el formato NDEF, lo mas habitual es guardar…">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://estebanetayo.es/lectura-de-nfc-en-android/">
+<meta property="og:image" content="https://estebanetayo.es/media/2012/06/tiposNFC_image.png"><meta name="theme-color" content="#f3ecdf">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,620&family=Outfit:wght@400;500;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/css/site.css">
+</head>
+<body>
+<a class="skip" href="#contenido">Saltar al contenido</a>
+<header class="mast"><div class="mast-inner"><a class="brand" href="/"><span class="monogram">EE</span><span>Esteban Etayo</span></a><nav class="nav" aria-label="Secciones"><a href="/">Archivo</a><a href="/sobre-mi/">Sobre mí</a><a href="/contactar/">Contacto</a><a href="/mis-aplicaciones/">Aplicaciones</a><a href="/temas/">Temas</a></nav><form class="finder" action="/" method="get" role="search"><label class="sr-only" for="q">Buscar en el archivo</label><input id="q" name="q" type="search" placeholder="Buscar en el archivo" autocomplete="off"></form></div></header><main id="contenido" class="wrap"><article><header class="post-head"><p class="cats"><a class="cat-link" href="/tema/android/">Android</a> <a class="cat-link" href="/tema/nfc/">NFC</a> </p><h1>Lectura de NFC en Android</h1><p class="byline">27 de junio de 2012 · 2 minutos de lectura</p></header><div class="prose"><p>Para introduzirte a NFC, comienza leyendo el <a href="/el-nfc-aparece-como-una-tecnologia-con-mucho-potencial/">post anterior</a></p><p>Cada tag o etiqueta NFC puede guardar contenido diverso en su interior segun el formato NDEF, lo mas habitual es guardar cadenas de texto, contenido mime/media para ser lanzado por una aplicacion o contenido de URIs, entre otros.</p><p>En el momento de pasar el terminal por encima de un tag, lanzaremos una u otra actividad según el formato que sea detectado (TNF TYPE). Esto es genial, puesto que podemos hacer un tag personalizado de manera que al leerlo salte la aplicacion que hemos generado para su lectura.</p><p>A nivel tecnico, al leer un Tag con formato NDEF, se recupera el primer Record de ese mensaje y se construye un Inet dependiendo del tipo de ndef que se ha leído.</p><p><a href="/media/2012/06/tiposNFC_image.png"><img alt="tipos de nfc" loading="lazy" src="/media/2012/06/tiposNFC_image.png" width="1098"/></a> En la imagen podemos ver en el lado izquierdo el contenido de diversos mensajes NDEF y en el lado derecho como debemos configurar los Intent-Filter del manifest para que lancen nuestra aplicacion al detectar contenido de un tipo especifico.</p><p>La base de codigo para leer una etiqueta NFC que contiene texto plano seria esto:</p><p><strong>1) AndroidManifest.xml:</strong></p><p>&lt;manifest xmlns:android="http://schemas.android.com/apk/res/android" package="......" android:versionCode="1" android:versionName="1.0" &gt; &lt;uses-permission android:name="android.permission.NFC"&gt; &lt;/uses-permission&gt; &lt;application android:icon="......" android:label="......" &gt; &lt;activity android:label="......" android:name="......" &gt; <strong> &lt;intent-filter &gt;</strong> <strong> &lt;action android:name="android.nfc.action.NDEF_DISCOVERED" /&gt;</strong> <strong> &lt;data android:mimeType="text/plain" /&gt;</strong> <strong> &lt;/intent-filter&gt;</strong> &lt;/activity&gt; ...... &lt;/application&gt;</p><p>&lt;/manifest&gt;</p><p><strong>2) Lectura del contenido desde la actividad</strong> </p><pre>protected void onResume(){
+....
+ NdefMessage msg = getIntent().getParcelableArrayExtra(NfcAdapter.EXTRA_NDEF_MESSAGES)[0];
+....
+}</pre><p> Esto es en su estado mas basico pero os dejo un par de metodos que me he creado y creo que son muy utiles para hacer una lectura y un procesado mas a fondo: </p><pre>PendingIntent mNfcPendingIntent;
+IntentFilter[] mWriteTagFilters;
+IntentFilter[] mNdefExchangeFilters;
+
+@Override
+protected void onResume() {
+		super.onResume();
+		mNfcAdapter.enableForegroundDispatch(this, mNfcPendingIntent,mWriteTagFilters, null);
+}
+
+// Al detectar un nuevo tagNFC, se crea un nuevo intent y debemos averiguar
+// que hacer con él
+protected void onNewIntent(Intent intent) {
+		try{
+		// Modo Lectura
+		if (!mWriteMode	&amp;&amp; NfcAdapter.ACTION_TAG_DISCOVERED.equals(intent.getAction())) {
+			NdefMessage[] msgs = recuperarMensajesNdef(intent);
+			toast("mensaje NDEF: " + new String(msgs[0].getRecords()[0].getPayload()));
+			System.out.println("--mensaje NDEF: " + new String(msgs[0].getRecords()[0].getPayload()));
+		}
+                }catch(Exception e){toast("Error al leer el Tag: ");}
+}
+
+public NdefMessage[] recuperarMensajesNdef(Intent intent) {
+		// Parse the intent
+		NdefMessage[] msgs = null;
+		String action = intent.getAction();
+		if (NfcAdapter.ACTION_TAG_DISCOVERED.equals(action)
+				|| NfcAdapter.ACTION_NDEF_DISCOVERED.equals(action)) {
+			Parcelable[] rawMsgs = intent.getParcelableArrayExtra(NfcAdapter.EXTRA_NDEF_MESSAGES);
+			if (rawMsgs != null) {
+				msgs = new NdefMessage;
+				for (int i = 0; i &lt; rawMsgs.length; i++) {
+					msgs = (NdefMessage) rawMsgs;
+				}
+			} else {
+				// Unknown tag type
+				byte[] empty = new byte[] {};
+				NdefRecord record = new NdefRecord(NdefRecord.TNF_UNKNOWN,
+						empty, empty, empty);
+				NdefMessage msg = new NdefMessage(new NdefRecord[] { record });
+				msgs = new NdefMessage[] { msg };
+			}
+		} else {
+			// Log.d(TAG, "Unknown intent.");
+			finish();
+		}
+		return msgs;
+}</pre><p> En un Tag NFC no es recomendable almacenar mas de 1Kb. Seria una locura intentar almacenar un XML, ya que el tag no esta concebido para ello.</p></div><nav class="post-nav" aria-label="Más entradas"><a href="/el-nfc-aparece-como-una-tecnologia-con-mucho-potencial/"><span class="label">Anterior</span><strong>El NFC aparece como una tecnologia con mucho potencial</strong></a><a class="next" href="/aws-amazon-web-services-el-cloud-computing-del-presente/"><span class="label">Siguiente</span><strong>AWS (Amazon Web Services): El Cloud Computing del presente</strong></a></nav><script type="application/ld+json">{"@context": "https://schema.org", "@type": "BlogPosting", "headline": "Lectura de NFC en Android", "datePublished": "2012-06-27T13:57:01", "inLanguage": "es", "author": {"@type": "Person", "name": "Esteban Etayo"}, "url": "https://estebanetayo.es/lectura-de-nfc-en-android/", "image": "https://estebanetayo.es/media/2012/06/tiposNFC_image.png"}</script></article></main><footer class="footer"><p>Archivo de estebanetayo.es, recuperado con los textos originales. Publicado entre 16 de junio de 2009 y 17 de marzo de 2014. Diseño nuevo.</p></footer><dialog id="lightbox"><img alt=""></dialog>
+<script src="/assets/js/site.js"></script>
+</body>
+</html>

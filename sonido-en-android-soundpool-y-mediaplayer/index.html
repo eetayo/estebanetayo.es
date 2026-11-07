@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sonido en Android: SoundPool y MediaPlayer · Esteban Etayo</title>
+<meta name="description" content="Cuando dentro de una aplicación Android, se desea incorporar efectos sonoros (sfx) o una música, hay dos clases que podemos usar. ¿Cuál es coger en cada caso? SoundPool: Esta…">
+<link rel="canonical" href="https://estebanetayo.es/sonido-en-android-soundpool-y-mediaplayer/">
+<meta property="og:title" content="Sonido en Android: SoundPool y MediaPlayer · Esteban Etayo">
+<meta property="og:description" content="Cuando dentro de una aplicación Android, se desea incorporar efectos sonoros (sfx) o una música, hay dos clases que podemos usar. ¿Cuál es coger en cada caso? SoundPool: Esta…">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://estebanetayo.es/sonido-en-android-soundpool-y-mediaplayer/">
+<meta property="og:image" content="https://estebanetayo.es/media/2012/04/mediaplayer_state_diagram.gif"><meta name="theme-color" content="#f3ecdf">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,620&family=Outfit:wght@400;500;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/css/site.css">
+</head>
+<body>
+<a class="skip" href="#contenido">Saltar al contenido</a>
+<header class="mast"><div class="mast-inner"><a class="brand" href="/"><span class="monogram">EE</span><span>Esteban Etayo</span></a><nav class="nav" aria-label="Secciones"><a href="/">Archivo</a><a href="/sobre-mi/">Sobre mí</a><a href="/contactar/">Contacto</a><a href="/mis-aplicaciones/">Aplicaciones</a><a href="/temas/">Temas</a></nav><form class="finder" action="/" method="get" role="search"><label class="sr-only" for="q">Buscar en el archivo</label><input id="q" name="q" type="search" placeholder="Buscar en el archivo" autocomplete="off"></form></div></header><main id="contenido" class="wrap"><article><header class="post-head"><p class="cats"><a class="cat-link" href="/tema/android/">Android</a> </p><h1>Sonido en Android: SoundPool y MediaPlayer</h1><p class="byline">12 de abril de 2012 · 2 minutos de lectura</p></header><div class="prose"><p>Cuando dentro de una aplicación Android, se desea incorporar efectos sonoros (sfx) o una música, hay dos clases que podemos usar. <strong>¿Cuál es coger en cada caso?</strong> <strong>SoundPool:</strong> Esta diseñado para efectos sonoros cortos, que pueden ser mantenidos en memoria para accesos rápidos. Este es el mejor método para efectos de juegos o aplicaciones. Usar este método con música de fondo o sonidos de medio tamaño es un gran error, ya que es muy probable que excedas el limite de memoria fijado por android para las aplicaciones (16Mb) y consigas un OutOfMemoryException</p><p>Ejemplo de uso de SoundPool: </p><pre>public static final int SOUND_EXPLOSION = 1;
+
+private SoundPool soundPool;
+private HashMap soundPoolMap;
+
+private void initSounds() {
+     soundPool = new SoundPool(4, AudioManager.STREAM_MUSIC, 100);
+     soundPoolMap = new HashMap();
+     soundPoolMap.put(SOUND_EXPLOSION, soundPool.load(getContext(), R.raw.explosion, 1));
+}
+
+public void playSound(int sound) {
+    /* Updated: The next 4 lines calculate the current volume in a scale of 0.0 to 1.0 */
+    AudioManager mgr = (AudioManager)getContext().getSystemService(Context.AUDIO_SERVICE);
+    float streamVolumeCurrent = mgr.getStreamVolume(AudioManager.STREAM_MUSIC);
+    float streamVolumeMax = mgr.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
+    float volume = streamVolumeCurrent / streamVolumeMax;
+
+    /* Play the sound with the correct volume */
+    soundPool.play(soundPoolMap.get(sound), volume, volume, 1, 0, 1f);
+}
+
+public void explode() {
+    playSound(SOUND_EXPLOSION);
+}</pre><p><strong>MediaPlayer:</strong> Está diseñado para música o sonidos de medio tamaño. Estos sonidos son cargados en disco y llamados cada vez que se necesitan pero sin consumir memoria de manera continuada. Cada vez que son llamados estos sonidos, se crea un pequeño delay o retardo que hay que tener en cuenta en las musicas de fondos (estoy investigando una posible solucion para el looping de un media player, ya que parece ser que Android tiene un bug en este parte, mas info <a href="http://code.google.com/p/android/issues/detail?id=18756" rel="noopener noreferrer" target="_blank">http://code.google.com/p/android/issues/detail?id=18756</a> ).</p><p>Ejemplo de uso de un MediaPlayer: </p><pre>//creaccion del MediaPlayer
+MediaPlayer mp = MediaPlayer.create(ClassName.this, R.raw.sound);
+//Arrancar MediaPlayer
+mp.start();  
+
+//ejemplo de pausa y continuacion del audio desde el lugar que se quedo
+mp.pause();
+mp.start();   
+
+//parar la musica y comenzar de nuevo desde el inicio
+mp.stop();
+mp.start();   
+
+//Muy importante liberar la memoria cuando se finalice su uso
+mp.release();</pre><p> En la siguiente imagen podemos ver la maquina de estados del MediaPlayer</p><p><a href="/media/2012/04/mediaplayer_state_diagram.gif"><img alt="maquina de estados MediaPlayer" loading="lazy" src="/media/2012/04/mediaplayer_state_diagram.gif" width="665"/></a></p></div><nav class="post-nav" aria-label="Más entradas"><a href="/modelos-de-negocio-en-apps-y-marketing-movil-redes-publicitarias-y-mediadores-i/"><span class="label">Anterior</span><strong>Modelos de negocio en Apps y Marketing Movil, redes publicitarias y mediadores (I)</strong></a><a class="next" href="/os-presento-xocolabs/"><span class="label">Siguiente</span><strong>Os presento: XOCOLABS</strong></a></nav><script type="application/ld+json">{"@context": "https://schema.org", "@type": "BlogPosting", "headline": "Sonido en Android: SoundPool y MediaPlayer", "datePublished": "2012-04-12T21:03:34", "inLanguage": "es", "author": {"@type": "Person", "name": "Esteban Etayo"}, "url": "https://estebanetayo.es/sonido-en-android-soundpool-y-mediaplayer/", "image": "https://estebanetayo.es/media/2012/04/mediaplayer_state_diagram.gif"}</script></article></main><footer class="footer"><p>Archivo de estebanetayo.es, recuperado con los textos originales. Publicado entre 16 de junio de 2009 y 17 de marzo de 2014. Diseño nuevo.</p></footer><dialog id="lightbox"><img alt=""></dialog>
+<script src="/assets/js/site.js"></script>
+</body>
+</html>

@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Solución a Exception de Android: java.lang.OutOfMemoryError: bitmap size exceeds VM budget · Esteban Etayo</title>
+<meta name="description" content="Este post quiza sea demasiado especifico para crear con él una nueva entrada, pero creo sinceramente que se lo merece. Este problema, o excepcion que saltaba en uno de mis juegos,…">
+<link rel="canonical" href="https://estebanetayo.es/solucion-a-exception-de-android-java-lang-outofmemoryerror-bitmap-size-exceeds-vm-budget/">
+<meta property="og:title" content="Solución a Exception de Android: java.lang.OutOfMemoryError: bitmap size exceeds VM budget · Esteban Etayo">
+<meta property="og:description" content="Este post quiza sea demasiado especifico para crear con él una nueva entrada, pero creo sinceramente que se lo merece. Este problema, o excepcion que saltaba en uno de mis juegos,…">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://estebanetayo.es/solucion-a-exception-de-android-java-lang-outofmemoryerror-bitmap-size-exceeds-vm-budget/">
+<meta name="theme-color" content="#f3ecdf">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,620&family=Outfit:wght@400;500;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/css/site.css">
+</head>
+<body>
+<a class="skip" href="#contenido">Saltar al contenido</a>
+<header class="mast"><div class="mast-inner"><a class="brand" href="/"><span class="monogram">EE</span><span>Esteban Etayo</span></a><nav class="nav" aria-label="Secciones"><a href="/">Archivo</a><a href="/sobre-mi/">Sobre mí</a><a href="/contactar/">Contacto</a><a href="/mis-aplicaciones/">Aplicaciones</a><a href="/temas/">Temas</a></nav><form class="finder" action="/" method="get" role="search"><label class="sr-only" for="q">Buscar en el archivo</label><input id="q" name="q" type="search" placeholder="Buscar en el archivo" autocomplete="off"></form></div></header><main id="contenido" class="wrap"><article><header class="post-head"><p class="cats"><a class="cat-link" href="/tema/android/">Android</a> </p><h1>Solución a Exception de Android: java.lang.OutOfMemoryError: bitmap size exceeds VM budget</h1><p class="byline">16 de noviembre de 2011 · 3 minutos de lectura</p></header><div class="prose"><p>Este post quiza sea demasiado especifico para crear con él una nueva entrada, pero creo sinceramente que se lo merece. Este problema, o excepcion que saltaba en uno de mis juegos, me ha quitado varias decenas de horas de mi vida, así que espero poder evitar este perdida a muchos de vosotros.</p><p><strong>Explicacion del problema:</strong></p><p>Esta exception salta, cuando se cargan demasidas imagenes dentro de una aplicacion android. El limite medio de una aplicacion esta entre 16Mb y 24Mb dependiendo del dispositivo. Cuando se soprepasa el limite la maquina dalvik fuerza el cierre de la aplicacion y en el logCat obtenemos algo parecido a esto:</p><pre>11-12 18:15:01.932: D/dalvikvm(411): GC_FOR_MALLOC freed 4K, 50% free 3523K/6919K, external 16605K/17130K, paused 70ms
+11-12 18:15:01.962: D/skia(411): --- decoder-&gt;decode returned false
+11-12 18:15:01.972: D/AndroidRuntime(411): Shutting down VM
+11-12 18:15:01.972: W/dalvikvm(411): threadid=1: thread exiting with uncaught exception (group=0x40015560)
+11-12 18:15:02.042: E/AndroidRuntime(411): FATAL EXCEPTION: main
+11-12 18:15:02.042: E/AndroidRuntime(411): java.lang.OutOfMemoryError: bitmap size exceeds VM budget
+11-12 18:15:02.042: E/AndroidRuntime(411): 	at android.graphics.BitmapFactory.nativeDecodeStream(Native Method)
+11-12 18:15:02.042: E/AndroidRuntime(411): 	at android.graphics.BitmapFactory.decodeStream(BitmapFactory.java:470)</pre><p>En este caso podemos apreciar que cuando la memoria externa ha llegado a 17Mb es cuando el sistema se viene abajo. Te recomiendo que leas mi post sobre <a href="/gestion-de-memoria-en-android-entendiendo-memory-leaks/">gestion de memoria</a> para que entiedas los mensajes. Normalmente es un fallo que salta en aplicaciones con alta carga en imágenes.</p><p>Tras probar con cientos de soluciones que he encontrado en la web, llege a la conclusion que ninguna por si sola resolvia mi problema, asi que optimice al maximo mi aplicacion e hice un remix de todas ellas. Asi se soluciono el problema</p><p><strong>Solución del problema:</strong></p><p>1) En el método onDestroy de cada Activity, es necesirio liberar todos los elementos que se estan utilizando en el sistema. He aqui un ejemplo:</p><pre> @Override
+protected void onDestroy() {
+	    super.onDestroy();
+	    this.liberarMemoria();
+}
+public void liberarMemoria(){
+     imagenes.recycleBitmaps();  // &lt;-- esta llamada la voy a explicar a continuación
+     this.unbindDrawables(.....vista que deseamos eliminar......);
+      //Cerrar cualquier tipo de conexion, webservices, bd, etc...
+      //asignar todos los elementos que usamos a NULL
+}
+ private void unbindDrawables(View view) {
+		    if (view.getBackground() != null) {
+		        view.getBackground().setCallback(null);
+		    }
+		    if (view instanceof ViewGroup) {
+		        for (int i = 0; i &lt; ((ViewGroup) view).getChildCount(); i++) {
+		            unbindDrawables(((ViewGroup) view).getChildAt(i));
+		        }
+		        ((ViewGroup) view).removeAllViews();
+		    }
+}</pre><p>2) El segundo paso es eliminar todas las asignaciones a imágenes como R.drawable.nombreImagen y crearnos un gestor propio de imágenes. Android tiene un bug desde su nacimiento y no gestiona de manera optima las imágenes, en la mayoría de las aplicaciones no hay problema, pero en algunos casos hay que replantearnos la utilización de su gestor.</p><p>a) Trasladar todas las imagenes desde la carpeta "\res\drawable-hdpi" a una carpeta que crearemos dentro de assets, tal como "\assets\drawable"</p><p>b) Copia esta clase en tu proyecto</p><pre>
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.ref.WeakReference;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+
+import android.content.Context;
+import android.content.res.AssetManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
+
+public class Imagenes {
+
+	  private HashMap<string,weakreference<bitmap>&gt; mBitmaps;
+
+          public WeakReference<drawable> getAssetImage(Context context, String filename){
+		//WeakReference<bitmap> tempbitmap = new WeakReference<bitmap>(BitmapFactory.decodeStream(inputStream));
+		InputStream is=null;
+		AssetManager assets;
+		WeakReference<bitmap> bitmap=null;
+		try{
+			if(mBitmaps==null)mBitmaps=new HashMap<string,weakreference<bitmap>&gt;();
+			assets = context.getResources().getAssets();
+		    is = new BufferedInputStream((assets.open("drawable/" + filename + ".png")));
+		    bitmap = new WeakReference<bitmap>(BitmapFactory.decodeStream(is));
+		    mBitmaps.put(filename,bitmap);
+			is.close();
+			WeakReference<drawable> tempDW = new WeakReference<drawable>(new BitmapDrawable(bitmap.get()));
+		    return tempDW;
+		}catch(Exception e){
+			e.printStackTrace();
+		}finally{
+			is = null;
+			bitmap=null;
+		}
+		return null;
+	}
+
+	public void recycleBitmaps() {
+		Iterator itr = mBitmaps.entrySet().iterator();
+        while (itr.hasNext()) {
+            Map.Entry e = (Map.Entry)itr.next();
+            System.out.println("Eliminar:"+e.getKey());
+            if(((Bitmap) mBitmaps.get(e.getKey()).get())!=null){
+            	((Bitmap) mBitmaps.get(e.getKey()).get()).recycle();
+            }
+        }
+        mBitmaps.clear();
+    }
+
+}
+</drawable></drawable></bitmap></string,weakreference<bitmap></bitmap></bitmap></bitmap></drawable></string,weakreference<bitmap></pre><p>c) Cambia todas las llamadas a una imagen</p><p>Antes: R.drawable.nombreImagen;</p><p>Ahora: Imagenes.getAssetImage(mContext.getApplicationContext(), "nombreImagen").get();</p><p>d) Crea una instancia de Imagenes en cada onCreate de cada Activity</p><pre>
+public Imagenes imagenes;
+@Override
+	public void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		imagenes = new Imagenes(true);
+</pre><p>e) La siguiente linea en el AndroidManifest de cada Actividad, mejorara el rendimiento</p><pre>
+android:configChanges="orientation|keyboardHidden|navigation"
+</pre><p>f) por ultimo optimiza, optimiza y vuelva a optimizar tu codigo</p><p><strong>Destacar que bajo mi punto de vista la clave de la solucion es en crear un gestor propio de imagenes que utilice WeakReference </strong></p></div><nav class="post-nav" aria-label="Más entradas"><a href="/gestion-de-memoria-en-android-entendiendo-memory-leaks/"><span class="label">Anterior</span><strong>Gestión de Memoria en Android, Entendiendo Memory leaks</strong></a><a class="next" href="/suecia-y-korea-dos-paises-emergentes-con-android/"><span class="label">Siguiente</span><strong>Suecia y Korea, dos países emergentes con Android</strong></a></nav><section class="comments"><h2>Comentarios</h2><article class="comment"><p class="who"><b>Arnaldo Gaspar</b> · 23 de diciembre de 2011</p><p>Llevo un buen rato tratando este problema y la verdad es que logro pequeñas mejoras pero el problema como tal sigue manifestandose. De muchos posts el tuyo es muy esclarecedor y explicativo, voy a intentar tu approach en mi proyecto y te cuento como va. Gracias por compartur tu experiencia.</p></article><article class="comment"><p class="who"><b>Raúl</b> · 30 de diciembre de 2011</p><p>Bueno, yo también llevo ya demasiadas horas con esto (menuda chapuza por parte de Google...), ahora mismo estoy implementando tu solución a ver que tal.</p><p>Solo algunos detalles que le pueden servir a quien quiera probar tu código: -En el primer código, sustituir &lt; por simbolo de menor-que -En el punto 2a supongo que te refieres a assets[BARRA]drawable -En el punto 2c por nombreImagen hay que poner el nombre del archivo sin su extensión ¿no??? -en Imagenes.getAssetImage(mContext.getApplicationContext(), “nombreImagen”).get(); la &quot;I&quot; de la primera Imagenes ES MINUSCULA</p><p>Por cierto, he tenido que hacer un cast para cambiar del tipo Drawable que devuelve esa sentencia a Bitmap que tenía en mi código, todavía no estoy seguro si he hecho lo correcto: Bitmap nod = ((BitmapDrawable)imagenes.getAssetImage(getApplicationContext(), &quot;nod&quot;).get()).getBitmap();</p><p>Bueno, sigo intentandolo, gracias por compartir tu código.</p></article><article class="comment"><p class="who"><b>Manuel</b> · 18 de febrero de 2012</p><p>Hola, me sucede algo parecido pero todos los enfoques de solucion apuntan a &quot;liberar&quot; una vez cargadas, pero a mi me sucede en el onCreate se cae cuando estoy en pleno proceso de carga de imagenes, asi que por mas que trato de optimizar el cierre no me sirve por que nunca carga... gracias por compartir</p></article><article class="comment"><p class="who"><b>eetayo</b> · 22 de febrero de 2012</p><p>HOla Manuel,</p><p>perdona por la tardanza de la respuesta. Has probado a utilizar AsyncTask para hacer la carga de imagenes sobre un thread independiente al hilo principal? Has cambiado las imagenes a la carpeta assets?</p><p>Un Saludo!</p></article><article class="comment"><p class="who"><b>Pepito</b> · 9 de noviembre de 2012</p><p>Muchisimas gracias por tu codigo, he tenedio que rematarlo, pero esta perfe. Gracias por tu trabajo.</p></article><article class="comment"><p class="who"><b>Silvio</b> · 15 de noviembre de 2012</p><p>Hola, muy bueno el código! Lo voy a probar. Pero tengo una duda, en el punto 1, en la primer línea del método liberarMemoria, la variable imagenes de qué tipo es? Y en la segunda línea: this.unbindDrawables(view), me podrías explicar como funciona y qué vistas le doy como parámetro? Gracias</p></article><article class="comment"><p class="who"><b>eetayo</b> · 24 de noviembre de 2012</p><p>Hola Silvio, TIenes la clase completo de Imagenes en el codigo que he puesto, justo aqui &quot;b) Copia esta clase en tu proyecto&quot; Sobre la segunda cuestion, debes eliminar todas las view que son de la vista que estas dejando atras antes de hacer el destroy.</p><p>Un Saludo!</p></article><article class="comment"><p class="who"><b>Hugo</b> · 25 de junio de 2013</p><p>que tal eetayo tengo un problema similar, pero mi caso es que traigo las imagenes desde un webservice me devuelve un array con las imagenes en un byte[] las cuales correspondientemente las transformot a Bitmap y las plasmo en un Gallery y ImageSwitcher bueno en esta activity tengo pestañas y en las cuales puse su gallery y su imageswitcher en cada pestaña y lo mas seguro es que este muy pesado para cargar todas porque con una si funciona ya con 2 no :/ que me recomendarias Saludos.</p></article><article class="comment"><p class="who"><b>Eloy Fernández</b> · 17 de diciembre de 2013</p><p>Hola. Buenos días. Estoy haciendo un jueguecito y me está pasando justamente eso. Estoy intentando probar tu código, pero tengo algunas dudas/problemas (voy a ir numerándolos, que creo que será mejor):</p><p>1º)( Cuando instancias la clase Imagenes imagenes = new Imagenes(true); en el onCreate de la clase activity... no hay constructor de Imagenes que tenga un parámetro booleano, ¿es un error o hay que crear ese constructor? si lo hay que hacer ¿cómo se crea?, es decir, ¿qué significado tiene ese booleano?</p><p>2º) Yo estoy utilizando Drawables en lugar de Bitmap y he hecho esto (pero no estoy muy seguro si dará resultado): Drawable draw = (BitmapDrawable) images.getAssetImage(context.getApplicationContext(), &quot;nombreImagen&quot;).get();</p><p>3º)(último) En la clase Imagenes haciendo copy paste, han salido tres errores debidos a la asignación por defecto de tipo Object en el Hashmap (Object no tiene el método get), dos se han solucionado parametrizando el Hashmap, pero el otro (en el método getAssetImage), he tenido que hacerle un casting, tal que así: WeakReference tempDW = new WeakReference(new BitmapDrawable((Resources) bitmap.get())); Esté bien hecho el casting (es el que eclipse ha autogenerado), o hay que hacerlo a (Bitmap). Por cierto, WeakReference ¿se parametriza? ¿con qué tipo de dato?</p></article><article class="comment"><p class="who"><b>Pablo</b> · 12 de junio de 2014</p><p>En mi caso he encontrado una solución basada en lo tuyo pero q no es lo mismo exactamente.</p><p>Tengo una AsyncTask corriendo y en un punto dado llamo a la funcion bajarImagen(InputStream is) public void bajarImagen(InputStream is) { try { image = BitmapFactory.decodeStream(is); } catch (OutOfMemoryError e) { mActivity.limpiar(); bajarImagen(is); } } Por otra parte en la actividad public void limpiar() { int cont = 0; while(imagenes[cont] == null &amp;&amp; cont &lt; num_imagen_actual) cont ++; imagenes[cont].recycle(); imagenes[cont] = null; }</p><p>Sobra decir que solo muestro imagen actual, sino petaria el programa, pero de momento me funciona, y no me da problemas para lo que me hace falta</p></article></section><script type="application/ld+json">{"@context": "https://schema.org", "@type": "BlogPosting", "headline": "Solución a Exception de Android: java.lang.OutOfMemoryError: bitmap size exceeds VM budget", "datePublished": "2011-11-16T23:09:08", "inLanguage": "es", "author": {"@type": "Person", "name": "Esteban Etayo"}, "url": "https://estebanetayo.es/solucion-a-exception-de-android-java-lang-outofmemoryerror-bitmap-size-exceeds-vm-budget/"}</script></article></main><footer class="footer"><p>Archivo de estebanetayo.es, recuperado con los textos originales. Publicado entre 16 de junio de 2009 y 17 de marzo de 2014. Diseño nuevo.</p></footer><dialog id="lightbox"><img alt=""></dialog>
+<script src="/assets/js/site.js"></script>
+</body>
+</html>
