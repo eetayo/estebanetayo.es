@@ -236,7 +236,7 @@ def contour_svg(seed: int = 7, width: int = 720, height: int = 720, peaks=None, 
     rnd = random.Random(seed)
     peaks = peaks or [(0.62, 0.42, 1.0), (0.18, 0.86, 0.55)]
     paths = []
-    for cx, cy, size in peaks:
+    for pi, (cx, cy, size) in enumerate(peaks):
         harmonics = [(k, rnd.uniform(0.04, 0.12) / k ** 0.6, rnd.uniform(0, math.tau)) for k in range(2, 7)]
         n = int(levels * size)
         for lvl in range(1, n + 1):
@@ -251,8 +251,8 @@ def contour_svg(seed: int = 7, width: int = 720, height: int = 720, peaks=None, 
                 y = cy * height + r * math.sin(t) * 0.86
                 pts.append((x, y))
             d = catmull_rom(pts)
-            major = " class=\"major\"" if lvl % 5 == 0 else ""
-            paths.append(f'<path{major} d="{d}"/>')
+            major = ' class="major"' if lvl % 5 == 0 else ""
+            paths.append(f'<path{major} data-p="{pi}" data-l="{lvl}" data-n="{n}" d="{d}"/>')
     return (f'<svg class="{cls}" viewBox="0 0 {width} {height}" aria-hidden="true" focusable="false" '
             f'preserveAspectRatio="xMidYMid slice">{"".join(paths)}</svg>')
 
@@ -412,14 +412,15 @@ def post_row(p, show_year=False):
     d = p["dt"].date()
     stamp = f"{short_date(d)} {d.year}" if show_year else short_date(d)
     return (
-        f'<li class="erow" data-id="{e(p["slug"])}"><a href="{p["path"]}">'
+        f'<li class="erow" data-id="{e(p["slug"])}" data-year="{d.year}" '
+        f'data-topics="{" ".join(t["slug"] for t in p["topics"])}"><a href="{p["path"]}">'
         f'<time class="mono" datetime="{d.isoformat()}">{stamp}</time>'
         f'<span class="etitle">{e(p["title"])}</span>'
         f'<span class="etopics mono">{e(", ".join(t["name"] for t in p["topics"]))}</span></a></li>'
     )
 
 
-def histogram(posts, link=True):
+def histogram(posts, link=True, filter_mode=False):
     per_year = Counter(p["dt"].year for p in posts)
     top = max(per_year.values())
     bars = []
@@ -427,8 +428,15 @@ def histogram(posts, link=True):
         h = max(8, round(per_year[y] / top * 100))
         inner = (f'<span class="bar" style="--h:{h}%"></span><span class="mono yr">{y}</span>'
                  f'<span class="mono n">{per_year[y]}</span>')
-        bars.append(f'<a href="/blog/#y-{y}">{inner}</a>' if link else f"<span>{inner}</span>")
-    return f'<div class="histo" aria-label="Entradas por año">{"".join(bars)}</div>'
+        if filter_mode:
+            bars.append(f'<button type="button" data-year="{y}" aria-pressed="false" '
+                        f'aria-label="{y}: {per_year[y]} entradas">{inner}</button>')
+        elif link:
+            bars.append(f'<a href="/blog/#y-{y}">{inner}</a>')
+        else:
+            bars.append(f"<span>{inner}</span>")
+    role = ' role="group"' if filter_mode else ""
+    return f'<div class="histo"{role} aria-label="Entradas por año">{"".join(bars)}</div>'
 
 
 # --------------------------------------------------------------------------
@@ -444,12 +452,24 @@ def page_home(posts, projects):
     by_slug = {p["slug"]: p for p in posts}
     picks = [by_slug[s] for s in picks if s in by_slug][:4]
 
-    timeline = [("2009", "Empieza este blog", "/hello-world/")]
+    tl_items = [("2009", "Empieza este blog", "/blog/", "Cuaderno",
+                 f"Mi primera entrada, «Hola!!!», es de junio de 2009. Durante cinco años escribí {len(posts)} entradas sobre apps, cloud, ponencias y emprendimiento.",
+                 "Leer el blog")]
     for p in sorted([p for p in projects if p["start"]], key=lambda p: p["start"]):
-        timeline.append((p["start"], p["name"], p["path"]))
-    timeline.append(("Hoy", f"{len(live)} proyectos en marcha", "/proyectos/"))
-    tl = "".join(f'<li><a href="{href}"><span class="mono">{e(y)}</span><span>{e(t)}</span></a></li>'
-                 for y, t, href in timeline)
+        tl_items.append((p["start"], p["name"], p["path"], STATES[p["state"]], p["summary"], "Ver el proyecto"))
+    tl_items.append(("Hoy", f"{len(live)} proyectos en marcha", "/proyectos/", "Ahora",
+                     ", ".join(p["name"] for p in live) + ".", "Ver todos los proyectos"))
+    last = len(tl_items) - 1
+    tl = "".join(
+        f'<li role="presentation"><a href="{href}" role="tab" id="tl-t{i}" aria-controls="tl-p{i}" '
+        f'aria-selected="{str(i == last).lower()}" tabindex="{0 if i == last else -1}">'
+        f'<span class="mono">{e(y)}</span><span>{e(t)}</span></a></li>'
+        for i, (y, t, href, *_rest) in enumerate(tl_items))
+    tl_panels = "".join(
+        f'<div class="tl-panel" role="tabpanel" id="tl-p{i}" aria-labelledby="tl-t{i}"{"" if i == last else " hidden"}>'
+        f'<p class="kicker mono">{e(y)} · {e(tag)}</p><h3>{e(t)}</h3><p>{e(summary)}</p>'
+        f'<a class="more" href="{href}">{e(cta)} {ICON_ARROW}</a></div>'
+        for i, (y, t, href, tag, summary, cta) in enumerate(tl_items))
 
     pick_cards = "".join(
         f'<li><a href="{p["path"]}"><span class="mono">{long_date(p["dt"].date())}</span>'
@@ -457,8 +477,9 @@ def page_home(posts, projects):
         for p in picks)
 
     body = f"""
-<section class="hero">
+<section class="hero" data-probe>
   {contour_svg()}
+  <div class="probe mono" aria-hidden="true"><span class="probe-x"></span><span class="probe-y"></span><b class="probe-read"></b></div>
   <div class="hero-inner">
     <p class="kicker mono">{COORDS} · {PLACE}</p>
     <h1 class="display">Esteban<br>Etayo</h1>
@@ -476,7 +497,10 @@ def page_home(posts, projects):
 
 <section class="band" aria-labelledby="h-camino">
   <div class="sec-head"><p class="kicker mono">02 · Camino</p><h2 id="h-camino">De las apps a la tienda online, y de ahí a hoy</h2></div>
-  <ol class="timeline">{tl}</ol>
+  <div class="tl">
+    <ol class="timeline" role="tablist" aria-label="Hitos">{tl}</ol>
+    <div class="tl-panels">{tl_panels}</div>
+  </div>
 </section>
 
 <section class="band strata-band" aria-labelledby="h-blog">
@@ -503,6 +527,46 @@ def page_home(posts, projects):
 
 def page_projects(projects):
     counts = Counter("live" if p["state"] in ("activo", "pausa") else "past" for p in projects)
+    y0, y1 = 2009, BUILD_DATE.year + 2
+    W, H = 1200, 560
+    pos, undated = [], 0
+    dated = 0
+    for p in sorted(projects, key=lambda p: p["start"] or "9999"):
+        if p["start"]:
+            yr = int(p["start"])
+            x = (yr - y0 + 0.5) / (y1 - y0)
+            y = (0.62, 0.36, 0.74, 0.48)[dated % 4]
+            dated += 1
+        else:
+            # Proyectos sin año confirmado: en la franja de «hoy», en dos columnas.
+            x = 0.82 if undated % 2 == 0 else 0.93
+            y = 0.16 + (undated // 2) * 0.22 + (0.1 if undated % 2 else 0)
+            undated += 1
+        pos.append((p, x, y))
+    live_state = ("activo", "pausa")
+    topo = contour_svg(seed=21, width=W, height=H, levels=40, cls="topo map-topo",
+                       peaks=[(x, y, 0.2 if p["state"] in live_state else 0.13) for p, x, y in pos])
+    topo = topo.replace('preserveAspectRatio="xMidYMid slice"', 'preserveAspectRatio="none"')
+    ticks = "".join(f'<span class="mono" style="left:{(yr - y0 + 0.5) / (y1 - y0) * 100:.2f}%">{yr}</span>'
+                    for yr in range(y0 + 1, BUILD_DATE.year - 2, 2))
+    ticks += f'<span class="mono now" style="left:87.5%">hoy · año por confirmar</span>'
+    summits = "".join(
+        f'<li class="summit{" tip-l" if x < 0.15 else (" tip-r" if x > 0.85 else "")}{" tip-below" if y < 0.4 else ""}" '
+        f'data-state="{p["state"]}" style="left:{x * 100:.2f}%;top:{y * 100:.2f}%">'
+        f'<a href="{p["path"]}" aria-describedby="tip-{p["slug"]}"><i aria-hidden="true"></i>'
+        f'<span class="sname">{e(p["name"])}</span></a>'
+        f'<span class="tip" role="tooltip" id="tip-{p["slug"]}"><span class="mono">{e(years_label(p))} · {STATES[p["state"]]}</span>'
+        f'{e(p["summary"])}</span></li>'
+        for p, x, y in pos)
+    pmap = f"""
+  <div class="pmap" id="mapa" hidden>
+    <div class="pmap-scroll"><div class="pmap-canvas">
+      {topo}
+      <ul class="summits">{summits}</ul>
+      <div class="pmap-axis" aria-hidden="true">{ticks}</div>
+    </div></div>
+    <p class="note mono">Cada cumbre es un proyecto, colocado en el año en que empezó. Verde: en marcha. Gris: etapa cerrada. <span class="swipe">Desliza para llegar a hoy →</span></p>
+  </div>"""
     body = f"""
 <section class="page-head with-topo">
   {contour_svg(seed=11, peaks=[(0.85, 0.3, 0.9)], cls="topo topo-s")}
@@ -513,10 +577,15 @@ def page_projects(projects):
     <button type="button" class="chip" data-filter="all" aria-pressed="true">Todos <span class="mono">{len(projects)}</span></button>
     <button type="button" class="chip" data-filter="live" aria-pressed="false">En marcha <span class="mono">{counts['live']}</span></button>
     <button type="button" class="chip" data-filter="past" aria-pressed="false">Etapas cerradas <span class="mono">{counts['past']}</span></button>
+    <span class="view-toggle" role="group" aria-label="Vista">
+      <button type="button" class="chip" data-view="lista" aria-pressed="true">Lista</button>
+      <button type="button" class="chip" data-view="mapa" aria-pressed="false">Mapa</button>
+    </span>
   </div>
 </section>
 <section class="band tight">
   <ul class="plist" id="proyectos">{''.join(project_row(p, "h2") for p in projects)}</ul>
+  {pmap}
 </section>
 """
     ld = [person_ld(), website_ld(),
@@ -599,8 +668,8 @@ def page_blog(posts, topics):
         f'<span class="mono">{len(items)} entradas</span></h2><ul class="elist">'
         + "".join(post_row(p) for p in items) + "</ul></section>"
         for i, (y, items) in enumerate(sorted(by_year.items(), reverse=True)))
-    chips = "".join(f'<a class="chip" href="/tema/{t["slug"]}/">{e(t["name"])} <span class="mono">{t["count"]}</span></a>'
-                    for t in topics)
+    chips = "".join(f'<a class="chip" href="/tema/{t["slug"]}/" data-topic="{t["slug"]}" aria-pressed="false">'
+                    f'{e(t["name"])} <span class="mono">{t["count"]}</span></a>' for t in topics)
     body = f"""
 <section class="page-head">
   {breadcrumbs_html([("Inicio", "/"), ("Blog", "/blog/")])}
@@ -608,12 +677,13 @@ def page_blog(posts, topics):
   <h1 class="display-m">Blog</h1>
   <p class="lede">{len(posts)} entradas sobre apps Android e iPhone, juegos, cloud, ponencias y mis primeros pasos como emprendedor. Textos originales, sin retocar.</p>
   <form class="finder" role="search" action="/blog/" method="get" id="buscar">
-    <label class="mono" for="q">Buscar en el blog</label>
+    <label class="mono" for="q">Buscar en el blog <kbd>/</kbd></label>
     <div class="finder-row">{ICON_SEARCH}<input id="q" name="q" type="search" autocomplete="off" placeholder="aquadroid, nfc, startup…"></div>
     <p class="result-count mono" aria-live="polite"></p>
   </form>
-  {histogram(posts)}
-  <div class="chips topics" aria-label="Temas">{chips}</div>
+  {histogram(posts, filter_mode=True)}
+  <div class="chips topics" aria-label="Filtrar por tema">{chips}</div>
+  <p class="filters-bar mono" hidden><span class="filters-label"></span> <button type="button" class="clear">Quitar filtros ×</button></p>
 </section>
 <p class="empty band tight" hidden>Ninguna entrada coincide con la búsqueda.</p>
 <div class="strata">{strata}</div>

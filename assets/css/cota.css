@@ -258,7 +258,6 @@ svg.arrow, .icon-btn svg { width: 1.1em; height: 1.1em; fill: none; stroke: curr
   background: var(--paper); border: 1.5px solid var(--ink); margin: 0.1rem 0 0.9rem;
   position: relative;
 }
-.timeline li:last-child a::before { background: var(--red); border-color: var(--red); }
 .timeline a span:last-child { font-size: 1.1rem; line-height: 1.25; display: block; }
 .timeline a:hover span:last-child { color: var(--red); }
 
@@ -521,6 +520,117 @@ svg.arrow, .icon-btn svg { width: 1.1em; height: 1.1em; fill: none; stroke: curr
   .topo-s { width: 100vw; opacity: 0.55; }
   .timeline { grid-auto-columns: minmax(8rem, 42vw); }
 }
+
+
+/* ==========================================================================
+   Interacción
+   ========================================================================== */
+
+/* Sonda topográfica de la portada */
+.hero svg.topo { transition: transform 0.6s cubic-bezier(.2,.7,.2,1); }
+.topo path { transition: stroke 0.25s ease, stroke-width 0.25s ease; }
+.topo path.hot { stroke: var(--red); stroke-width: 1.8; }
+.probe {
+  position: absolute; left: 0; top: 0; z-index: 2; pointer-events: none;
+  display: grid; gap: 0.1rem; padding: 0.45rem 0.6rem; margin: 1rem 0 0 1rem;
+  background: var(--paper); border: 1px solid var(--ink); color: var(--ink);
+  font-size: 0.7rem; line-height: 1.35; white-space: nowrap;
+  opacity: 0; transition: opacity 0.2s ease;
+}
+.probe::before {
+  content: ""; position: absolute; left: -1rem; top: -1rem; width: 0.9rem; height: 0.9rem;
+  border-left: 1px solid var(--red); border-top: 1px solid var(--red);
+}
+.probe b { color: var(--red); font-weight: 500; }
+.hero.probing .probe { opacity: 1; }
+.hero.probing { cursor: crosshair; }
+.hero-inner { pointer-events: none; }
+.hero-inner a, .hero-inner p, .hero-inner h1 { pointer-events: auto; }
+
+/* Línea de tiempo con pestañas */
+.tl { display: grid; gap: 1.5rem; }
+.timeline [role="tab"] { cursor: pointer; }
+.timeline [role="tab"][aria-selected="true"] span:last-child { color: var(--red); }
+.timeline [role="tab"][aria-selected="true"]::before { background: var(--red); border-color: var(--red); transform: scale(1.35); }
+.timeline a::before { transition: transform 0.2s ease, background 0.2s ease; }
+.tl-panels { min-height: 9.5rem; }
+.tl-panel { max-width: 40rem; padding: 1.25rem 1.5rem; background: var(--paper-2); border-left: 2px solid var(--red); animation: rise 0.35s ease both; }
+.tl-panel h3 { margin: 0 0 0.4rem; font-weight: 400; font-size: 1.6rem; line-height: 1.15; letter-spacing: -0.015em; }
+.tl-panel p:not(.kicker) { margin: 0 0 0.5rem; color: var(--muted); }
+.tl-panel .kicker { margin-bottom: 0.5rem; }
+@keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+/* Mapa de proyectos */
+.view-toggle { display: inline-flex; gap: 0.5rem; margin-left: auto; }
+.pmap { margin-top: 0.5rem; }
+.pmap-scroll { overflow-x: auto; border-top: 1px solid var(--ink); border-bottom: 1px solid var(--line); }
+.pmap-canvas { position: relative; min-width: 46rem; aspect-ratio: 1200 / 560; }
+.pmap-canvas .map-topo { position: absolute; inset: 0; width: 100%; height: 100%; }
+.summits { list-style: none; margin: 0; padding: 0; position: absolute; inset: 0; }
+.summit { position: absolute; transform: translate(-50%, -50%); }
+.summit[hidden] { display: none; }
+.summit > a { display: flex; flex-direction: column; align-items: center; gap: 0.3rem; text-decoration: none; padding: 0.4rem; }
+.summit i {
+  width: 0; height: 0; border-left: 0.5rem solid transparent; border-right: 0.5rem solid transparent;
+  border-bottom: 0.85rem solid var(--ink); position: relative; transition: transform 0.2s ease;
+}
+.summit[data-state="activo"] i { border-bottom-color: var(--green); }
+.summit[data-state="cerrado"] i, .summit[data-state="vendido"] i { border-bottom-color: var(--muted); opacity: 0.55; }
+.sname { font-size: 1rem; line-height: 1.1; white-space: nowrap; background: color-mix(in srgb, var(--paper) 80%, transparent); padding: 0 0.25rem; }
+.summit > a:hover i, .summit > a:focus-visible i { transform: translateY(-3px) scale(1.25); border-bottom-color: var(--red); opacity: 1; }
+.summit > a:hover .sname, .summit > a:focus-visible .sname { color: var(--red); }
+.tip {
+  position: absolute; left: 50%; bottom: calc(100% + 0.25rem); z-index: 3; width: 17rem;
+  transform: translate(-50%, 4px); padding: 0.75rem 0.9rem; font-size: 0.92rem; line-height: 1.4;
+  background: var(--paper); border: 1px solid var(--ink); color: var(--ink);
+  opacity: 0; visibility: hidden; transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s;
+  pointer-events: none;
+}
+.tip .mono { display: block; color: var(--red); margin-bottom: 0.3rem; font-size: 0.68rem; }
+.summit:hover .tip, .summit:focus-within .tip { opacity: 1; visibility: visible; transform: translate(-50%, 0); }
+.summit:hover, .summit:focus-within { z-index: 4; }
+.summit { transition: z-index 0s 0.2s; }
+.summit:hover, .summit:focus-within { transition: none; }
+.pmap-axis { position: absolute; left: 0; right: 0; bottom: 0; height: 2rem; border-top: 1px solid var(--line); }
+.pmap-axis span { position: absolute; bottom: 0.45rem; transform: translateX(-50%); color: var(--muted); font-size: 0.68rem; }
+.pmap-axis span::before { content: ""; position: absolute; left: 50%; top: -0.55rem; height: 0.4rem; border-left: 1px solid var(--muted); }
+.pmap .note { margin-top: 0.75rem; }
+.swipe { display: none; color: var(--red); }
+@media (max-width: 760px) { .swipe { display: inline; } }
+.pmap-axis .now { color: var(--red); white-space: nowrap; }
+.tip-l .tip { left: 0; transform: translate(0, 4px); }
+.tip-r .tip { left: auto; right: 0; transform: translate(0, 4px); }
+.tip-below .tip { bottom: auto; top: calc(100% + 0.25rem); }
+.summit.tip-l:hover .tip, .summit.tip-l:focus-within .tip, .summit.tip-r:hover .tip, .summit.tip-r:focus-within .tip { transform: none; }
+.pmap-axis .now::before { display: none; }
+.map-topo path { stroke-dasharray: none; stroke-dashoffset: 0; animation: none; }
+
+/* Filtros del blog */
+.histo button {
+  flex: 1; display: grid; grid-template-rows: 1fr auto auto; height: 100%; padding: 0; border: 0;
+  background: none; color: inherit; font: inherit; cursor: pointer; text-align: center;
+}
+.histo button:hover .bar, .histo button[aria-pressed="true"] .bar { background: var(--red); border-color: var(--red); }
+.histo button[aria-pressed="true"] .yr { color: var(--red); }
+.chip[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+.filters-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem; color: var(--ink); margin: 1rem 0 0; }
+.filters-bar .clear { border: 1px solid var(--line); background: none; color: var(--red); border-radius: 999px; min-height: 2.25rem; padding: 0 0.9rem; font: inherit; cursor: pointer; }
+.filters-bar .clear:hover { border-color: var(--red); }
+kbd { font-family: var(--mono); font-size: 0.68rem; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 0 0.35rem; margin-left: 0.35rem; color: var(--muted); }
+mark { background: color-mix(in srgb, var(--red) 22%, transparent); color: inherit; padding: 0 0.05em; border-radius: 2px; }
+
+/* Progreso de lectura */
+.progress { position: fixed; left: 0; right: 0; top: 0; z-index: 40; height: 2px; background: var(--red); transform-origin: 0 50%; transform: scaleX(0); }
+
+/* Aparición suave */
+.reveal { opacity: 0; transform: translateY(12px); transition: opacity 0.6s ease, transform 0.6s cubic-bezier(.2,.7,.2,1); }
+.reveal.in { opacity: 1; transform: none; }
+
+@media (max-width: 620px) {
+  .view-toggle { margin-left: 0; }
+  .tl-panel { padding: 1rem 1.1rem; }
+}
+@media (hover: none) { .probe { display: none; } }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
