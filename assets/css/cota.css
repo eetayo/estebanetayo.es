@@ -508,8 +508,9 @@ svg.arrow, .icon-btn svg { width: 1.1em; height: 1.1em; fill: none; stroke: curr
 @media (max-width: 620px) {
   .brand-name { display: none; }
   .mast-inner { gap: 0.25rem; min-height: 3.5rem; }
-  .nav a { padding: 0 0.42rem; font-size: 0.94rem; }
-  .nav a[aria-current="page"]::after { left: 0.42rem; right: 0.42rem; }
+  .nav a { padding: 0 0.34rem; font-size: 0.9rem; }
+  .nav a[aria-current="page"]::after { left: 0.34rem; right: 0.34rem; }
+  .icon-btn { padding: 0 0.3rem; }
   .hero .topo { right: -45%; top: -5%; width: 140vw; opacity: 0.7; }
   .sec-head { grid-template-columns: 1fr; }
   .sec-head .more { justify-self: start; margin-top: 0.5rem; }
@@ -631,6 +632,58 @@ mark { background: color-mix(in srgb, var(--red) 22%, transparent); color: inher
   .tl-panel { padding: 1rem 1.1rem; }
 }
 @media (hover: none) { .probe { display: none; } }
+
+
+/* ==========================================================================
+   Proyectos actuales primero
+   ========================================================================== */
+
+.pcards { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(22rem, 100%), 1fr)); gap: 0 2.5rem; }
+.pcards[hidden] { display: none; }
+.pcard { display: flex; flex-direction: column; gap: 0.6rem; padding: 1.6rem 0 1.8rem; border-top: 1px solid var(--ink); min-width: 0; }
+.pc-top { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.5rem 1rem; margin: 0; color: var(--muted); }
+.pc-name { margin: 0.4rem 0 0; font-weight: 350; font-size: clamp(2.1rem, 3.6vw, 3rem); line-height: 1; letter-spacing: -0.03em; }
+.pc-name a { text-decoration: none; }
+.pc-name a:hover { color: var(--red); }
+.pc-sum { margin: 0; color: var(--muted); font-size: 1.1rem; max-width: 30rem; }
+.pc-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 1.5rem; margin: auto 0 0; padding-top: 0.6rem; }
+.pc-visit { display: inline-flex; align-items: center; gap: 0.4rem; min-height: 2.75rem; color: var(--ink); text-decoration-color: var(--red); }
+.pc-visit:hover { color: var(--red); }
+.pcard:hover .pc-name a { color: var(--red); }
+
+.archive-strip { padding-top: 3rem; }
+.archive-strip a {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0.2rem 2rem; align-items: center;
+  padding: 1.4rem 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); text-decoration: none; color: var(--muted);
+}
+.archive-strip .kicker { grid-column: 1; margin: 0; color: var(--muted); }
+.archive-strip .as-title { grid-column: 1; font-size: 1.35rem; color: var(--ink); }
+.archive-strip .as-sub { grid-column: 1; font-size: 0.98rem; }
+.archive-strip .arrow { grid-column: 2; grid-row: 1 / span 3; width: 1.4rem; height: 1.4rem; }
+.archive-strip a:hover .as-title, .archive-strip a:hover .arrow { color: var(--red); }
+
+.past { border-top: 1px solid var(--line); margin-top: 3rem; }
+.past summary { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.25rem 1rem; padding: 1.2rem 0; cursor: pointer; list-style: none; color: var(--muted); }
+.past summary::-webkit-details-marker { display: none; }
+.past summary .kicker { width: 100%; margin: 0; color: var(--muted); }
+.past summary strong { font-weight: 400; font-size: 1.3rem; color: var(--ink); }
+.past summary strong::after { content: " +"; color: var(--red); }
+.past[open] summary strong::after { content: " −"; }
+.past .plist { opacity: 0.85; }
+
+.now-strip { max-width: var(--read); margin: 3rem 0 0; padding: 1.4rem 1.5rem; background: var(--paper-2); border-top: 2px solid var(--green); }
+.now-strip .kicker { color: var(--green); }
+.now-links { display: grid; grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr)); gap: 0.75rem 1.5rem; margin-bottom: 0.75rem; }
+.now-links a { display: flex; flex-direction: column; text-decoration: none; }
+.now-links strong { font-weight: 450; font-size: 1.15rem; }
+.now-links span { font-family: var(--mono); font-size: 0.7rem; color: var(--muted); }
+.now-links a:hover strong { color: var(--red); }
+
+.historic a { color: var(--ink); margin-left: 0.25rem; text-decoration-color: var(--red); }
+.historic { display: block; }
+.historic .dot { display: inline-block; margin-right: 0.5rem; vertical-align: 0.05em; }
+.today .camino { margin-top: 3rem; }
+.today .tl { margin-bottom: 1rem; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }

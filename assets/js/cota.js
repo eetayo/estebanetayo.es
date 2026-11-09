@@ -139,7 +139,7 @@
 
   /* ---------- Proyectos: filtro por estado y vista lista / mapa ---------- */
   var stateChips = $$("[data-filter]");
-  if (stateChips.length) {
+  if (stateChips.length || $$("[data-view]").length) {
     var items = $$("#proyectos .prow, .summit");
     var applyState = function (f) {
       stateChips.forEach(function (c) { c.setAttribute("aria-pressed", String(c.dataset.filter === f)); });
@@ -291,7 +291,7 @@
 
   /* ---------- Aparición suave de filas al hacer scroll (solo lo que está por debajo) ---------- */
   if (!reduced && "IntersectionObserver" in window) {
-    var targets = $$(".prow, .picks li, .stratum, .topic-list li, .miles li");
+    var targets = $$(".prow, .pcard, .picks li, .stratum, .topic-list li, .miles li");
     var io = new IntersectionObserver(function (entries) {
       entries.forEach(function (en) {
         if (en.isIntersecting) { en.target.classList.add("in"); io.unobserve(en.target); }

@@ -272,7 +272,7 @@ def catmull_rom(pts) -> str:
 # Plantilla común
 # --------------------------------------------------------------------------
 
-NAV = [("/proyectos/", "Proyectos"), ("/blog/", "Blog"), ("/sobre-mi/", "Sobre mí"), ("/contactar/", "Contacto")]
+NAV = [("/proyectos/", "Proyectos"), ("/sobre-mi/", "Sobre mí"), ("/contactar/", "Contacto"), ("/blog/", "Archivo")]
 
 FONTS = ("https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500"
          "&family=Newsreader:ital,opsz,wght@0,6..72,300..600;1,6..72,300..500&display=swap")
@@ -368,7 +368,7 @@ def layout(*, path, title, description, body, section=None, og_type="website", i
         f'<a class="brand" href="/" aria-label="{NAME}, inicio"><span class="mark">EE</span>'
         f'<span class="brand-name">{NAME}</span></a>'
         f'<nav class="nav" aria-label="Principal">{nav}</nav>'
-        f'<a class="icon-btn" href="/blog/#buscar" aria-label="Buscar en el blog">{ICON_SEARCH}</a>'
+        f'<a class="icon-btn" href="/blog/#buscar" aria-label="Buscar en el archivo">{ICON_SEARCH}</a>'
         '</div></header>'
     )
     footer = (
@@ -376,7 +376,7 @@ def layout(*, path, title, description, body, section=None, og_type="website", i
         f'<div class="foot-sign"><span class="mark">EE</span><p><strong>{NAME}</strong><br>'
         'Emprendedor digital. Escribiendo desde 2009.</p></div>'
         '<nav class="foot-nav" aria-label="Pie">'
-        '<a href="/proyectos/">Proyectos</a><a href="/blog/">Blog 2009–2014</a><a href="/temas/">Temas</a>'
+        '<a href="/proyectos/">Proyectos</a><a href="/blog/">Archivo 2009–2014</a><a href="/temas/">Temas</a>'
         '<a href="/sobre-mi/">Sobre mí</a><a href="/contactar/">Contacto</a><a href="/feed.xml">RSS</a></nav>'
         f'<p class="coords mono">{COORDS} · {PLACE}</p>'
         '<button class="theme-toggle mono" type="button" aria-label="Cambiar entre modo claro y oscuro">'
@@ -443,39 +443,57 @@ def histogram(posts, link=True, filter_mode=False):
 # Páginas
 # --------------------------------------------------------------------------
 
-def page_home(posts, projects):
-    live = [p for p in projects if p["state"] in ("activo", "pausa")]
-    featured = [p for p in live if p["featured"]] or live[:6]
-    picks = [s for s in ("la-ortopedia-online-movernos-com-empieza-rodar", "os-presento-xocolabs",
-                         "¿cuanto-vale-tu-idea-como-la-convierto-en-una-startup",
-                         "elevator-pitch-o-discurso-del-ascensor")]
-    by_slug = {p["slug"]: p for p in posts}
-    picks = [by_slug[s] for s in picks if s in by_slug][:4]
+def live_projects(projects):
+    return [p for p in projects if p["state"] in ("activo", "pausa")]
 
-    tl_items = [("2009", "Empieza este blog", "/blog/", "Cuaderno",
-                 f"Mi primera entrada, «Hola!!!», es de junio de 2009. Durante cinco años escribí {len(posts)} entradas sobre apps, cloud, ponencias y emprendimiento.",
-                 "Leer el blog")]
+
+def project_card(p, heading="h3"):
+    draft = '<span class="draft mono">texto provisional</span>' if p["draft"] else ""
+    visit = (f'<a class="pc-visit mono" href="{e(p["url"])}" rel="noopener">{e(domain(p["url"]))} {ICON_OUT}</a>'
+             if p["url"] else "")
+    return (
+        f'<li class="pcard" data-state="{p["state"]}">'
+        f'<p class="pc-top mono"><span>{e(p["sector"])}</span>{state_badge(p)}</p>'
+        f'<{heading} class="pc-name"><a href="{p["path"]}">{e(p["name"])}</a></{heading}>'
+        f'<p class="pc-sum">{e(p["summary"])}</p>'
+        f'<p class="pc-foot">{visit}<a class="more" href="{p["path"]}">Ficha {ICON_ARROW}</a>{draft}</p></li>'
+    )
+
+
+def timeline_html(posts, projects):
+    live = live_projects(projects)
+    items = [("2009", "Empieza este blog", "/blog/", "Archivo",
+              f"Mi primera entrada es de junio de 2009. Hasta 2014 escribí {len(posts)} entradas sobre apps, cloud, ponencias y emprendimiento.",
+              "Abrir el archivo")]
     for p in sorted([p for p in projects if p["start"]], key=lambda p: p["start"]):
-        tl_items.append((p["start"], p["name"], p["path"], STATES[p["state"]], p["summary"], "Ver el proyecto"))
-    tl_items.append(("Hoy", f"{len(live)} proyectos en marcha", "/proyectos/", "Ahora",
-                     ", ".join(p["name"] for p in live) + ".", "Ver todos los proyectos"))
-    last = len(tl_items) - 1
-    tl = "".join(
+        items.append((p["start"], p["name"], p["path"], STATES[p["state"]], p["summary"], "Ver el proyecto"))
+    items.append(("Hoy", f"{len(live)} proyectos en marcha", "/proyectos/", "Ahora",
+                  ", ".join(p["name"] for p in live) + ".", "Ver los proyectos"))
+    last = len(items) - 1
+    tabs = "".join(
         f'<li role="presentation"><a href="{href}" role="tab" id="tl-t{i}" aria-controls="tl-p{i}" '
         f'aria-selected="{str(i == last).lower()}" tabindex="{0 if i == last else -1}">'
         f'<span class="mono">{e(y)}</span><span>{e(t)}</span></a></li>'
-        for i, (y, t, href, *_rest) in enumerate(tl_items))
-    tl_panels = "".join(
+        for i, (y, t, href, *_rest) in enumerate(items))
+    panels = "".join(
         f'<div class="tl-panel" role="tabpanel" id="tl-p{i}" aria-labelledby="tl-t{i}"{"" if i == last else " hidden"}>'
         f'<p class="kicker mono">{e(y)} · {e(tag)}</p><h3>{e(t)}</h3><p>{e(summary)}</p>'
         f'<a class="more" href="{href}">{e(cta)} {ICON_ARROW}</a></div>'
-        for i, (y, t, href, tag, summary, cta) in enumerate(tl_items))
+        for i, (y, t, href, tag, summary, cta) in enumerate(items))
+    return (f'<div class="tl"><ol class="timeline" role="tablist" aria-label="Hitos">{tabs}</ol>'
+            f'<div class="tl-panels">{panels}</div></div>')
 
-    pick_cards = "".join(
-        f'<li><a href="{p["path"]}"><span class="mono">{long_date(p["dt"].date())}</span>'
-        f'<span class="ptitle">{e(p["title"])}</span><span class="pexc">{e(clip(p["description"], 150))}</span></a></li>'
-        for p in picks)
 
+def now_strip(projects, limit=4):
+    live = live_projects(projects)[:limit]
+    links = "".join(f'<a href="{p["path"]}"><strong>{e(p["name"])}</strong><span>{e(p["sector"])}</span></a>' for p in live)
+    return (f'<aside class="now-strip" aria-label="Lo que hago hoy"><p class="kicker mono">Hoy · lo que hago ahora</p>'
+            f'<div class="now-links">{links}</div><a class="more" href="/proyectos/">Todos mis proyectos {ICON_ARROW}</a></aside>')
+
+
+def page_home(posts, projects):
+    live = live_projects(projects)
+    sectors = sorted({p["sector"].split(" · ")[0] for p in live if p["sector"]})
     body = f"""
 <section class="hero" data-probe>
   {contour_svg()}
@@ -483,45 +501,37 @@ def page_home(posts, projects):
   <div class="hero-inner">
     <p class="kicker mono">{COORDS} · {PLACE}</p>
     <h1 class="display">Esteban<br>Etayo</h1>
-    <p class="claim">Ingeniero y emprendedor. Construyo proyectos digitales desde la Ribera de Navarra y llevo contándolo aquí <em>desde 2009</em>.</p>
-    <p class="stats mono"><span>{len(live)} proyectos en marcha</span><span>{len(posts)} entradas en el blog</span><span>2009–{BUILD_DATE.year}</span></p>
-    <p class="cta"><a class="btn" href="/proyectos/">Ver proyectos {ICON_ARROW}</a><a class="btn ghost" href="/contactar/">Escríbeme</a></p>
+    <p class="claim">Emprendedor digital en la Ribera de Navarra. Ahora mismo llevo <em>{len(live)} proyectos en marcha</em>, de {', '.join(s.lower() for s in sectors[:-1])} y {sectors[-1].lower()}.</p>
+    <p class="cta"><a class="btn" href="#ahora">Ver lo que hago {ICON_ARROW}</a><a class="btn ghost" href="/contactar/">Escríbeme</a></p>
   </div>
 </section>
 
-<section class="band" aria-labelledby="h-proyectos">
-  <div class="sec-head"><p class="kicker mono">01 · Ahora</p><h2 id="h-proyectos">Proyectos en marcha</h2>
-  <a class="more" href="/proyectos/">Todos los proyectos {ICON_ARROW}</a></div>
-  <ul class="plist">{''.join(project_row(p) for p in featured)}</ul>
-</section>
-
-<section class="band" aria-labelledby="h-camino">
-  <div class="sec-head"><p class="kicker mono">02 · Camino</p><h2 id="h-camino">De las apps a la tienda online, y de ahí a hoy</h2></div>
-  <div class="tl">
-    <ol class="timeline" role="tablist" aria-label="Hitos">{tl}</ol>
-    <div class="tl-panels">{tl_panels}</div>
-  </div>
-</section>
-
-<section class="band strata-band" aria-labelledby="h-blog">
-  <div class="sec-head"><p class="kicker mono">03 · Cuaderno 2009–2014</p><h2 id="h-blog">Del blog</h2>
-  <a class="more" href="/blog/">Las {len(posts)} entradas {ICON_ARROW}</a></div>
-  <p class="sec-lede">Lo que escribí mientras aprendía a hacer apps, daba charlas y montaba mis primeros negocios. Se conserva tal cual, con sus direcciones de siempre.</p>
-  {histogram(posts)}
-  <ul class="picks">{pick_cards}</ul>
+<section class="band" id="ahora" aria-labelledby="h-proyectos">
+  <div class="sec-head"><p class="kicker mono">Ahora · {BUILD_DATE.year}</p><h2 id="h-proyectos">Proyectos en marcha</h2>
+  <a class="more" href="/proyectos/">Ficha de cada proyecto {ICON_ARROW}</a></div>
+  <ul class="pcards">{''.join(project_card(p) for p in live)}</ul>
 </section>
 
 <section class="band contact-band" aria-labelledby="h-contacto">
   <h2 id="h-contacto" class="display-s">¿Hablamos de un proyecto?</h2>
   <p><a class="btn" href="/contactar/">Contacto {ICON_ARROW}</a></p>
 </section>
+
+<section class="band archive-strip" aria-labelledby="h-archivo">
+  <a href="/blog/"><span class="kicker mono">Archivo 2009–2014</span>
+  <span id="h-archivo" class="as-title">El blog de cuando empezaba</span>
+  <span class="as-sub">{len(posts)} entradas sobre apps, juegos y mis primeros negocios. Se conserva tal cual.</span>{ICON_ARROW}</a>
+</section>
 """
     ld = [person_ld(), website_ld(),
           {"@type": "ProfilePage", "@id": f"{SITE}/#webpage", "url": f"{SITE}/", "name": NAME,
-           "isPartOf": {"@id": f"{SITE}/#website"}, "mainEntity": {"@id": f"{SITE}/#esteban"}, "inLanguage": "es-ES"}]
-    return layout(path="/", title=f"{NAME} · Emprendedor digital en Navarra: proyectos y blog",
-                  description=(f"Soy Esteban Etayo, ingeniero y emprendedor en la Ribera de Navarra. "
-                               f"Mis proyectos: {', '.join(p['name'] for p in featured[:4])}… y mi blog desde 2009."),
+           "isPartOf": {"@id": f"{SITE}/#website"}, "mainEntity": {"@id": f"{SITE}/#esteban"}, "inLanguage": "es-ES"},
+          {"@type": "ItemList", "name": "Proyectos en marcha", "itemListElement": [
+              {"@type": "ListItem", "position": i + 1, "url": abs_url(p["path"]), "name": p["name"]}
+              for i, p in enumerate(live)]}]
+    return layout(path="/", title=f"{NAME} · Emprendedor digital en Navarra",
+                  description=(f"Soy Esteban Etayo, emprendedor digital en la Ribera de Navarra. "
+                               f"Proyectos en marcha: {', '.join(p['name'] for p in live[:5])}."),
                   body=body, section="/", ld=ld, body_class="home", og_type="profile")
 
 
@@ -531,25 +541,18 @@ def page_projects(projects):
     W, H = 1200, 560
     pos, undated = [], 0
     dated = 0
-    for p in sorted(projects, key=lambda p: p["start"] or "9999"):
-        if p["start"]:
-            yr = int(p["start"])
-            x = (yr - y0 + 0.5) / (y1 - y0)
-            y = (0.62, 0.36, 0.74, 0.48)[dated % 4]
-            dated += 1
-        else:
-            # Proyectos sin año confirmado: en la franja de «hoy», en dos columnas.
-            x = 0.82 if undated % 2 == 0 else 0.93
-            y = 0.16 + (undated // 2) * 0.22 + (0.1 if undated % 2 else 0)
-            undated += 1
+    live = live_projects(projects)
+    past = [p for p in projects if p not in live]
+    # El mapa es la «cordillera» de hoy: solo proyectos en marcha, repartidos a lo ancho.
+    for i, p in enumerate(live):
+        x = 0.1 + i * (0.8 / max(1, len(live) - 1))
+        y = (0.5, 0.3, 0.66, 0.38, 0.58, 0.26, 0.7)[i % 7]
         pos.append((p, x, y))
     live_state = ("activo", "pausa")
     topo = contour_svg(seed=21, width=W, height=H, levels=40, cls="topo map-topo",
                        peaks=[(x, y, 0.2 if p["state"] in live_state else 0.13) for p, x, y in pos])
     topo = topo.replace('preserveAspectRatio="xMidYMid slice"', 'preserveAspectRatio="none"')
-    ticks = "".join(f'<span class="mono" style="left:{(yr - y0 + 0.5) / (y1 - y0) * 100:.2f}%">{yr}</span>'
-                    for yr in range(y0 + 1, BUILD_DATE.year - 2, 2))
-    ticks += f'<span class="mono now" style="left:87.5%">hoy · año por confirmar</span>'
+    ticks = ""
     summits = "".join(
         f'<li class="summit{" tip-l" if x < 0.15 else (" tip-r" if x > 0.85 else "")}{" tip-below" if y < 0.4 else ""}" '
         f'data-state="{p["state"]}" style="left:{x * 100:.2f}%;top:{y * 100:.2f}%">'
@@ -565,27 +568,31 @@ def page_projects(projects):
       <ul class="summits">{summits}</ul>
       <div class="pmap-axis" aria-hidden="true">{ticks}</div>
     </div></div>
-    <p class="note mono">Cada cumbre es un proyecto, colocado en el año en que empezó. Verde: en marcha. Gris: etapa cerrada. <span class="swipe">Desliza para llegar a hoy →</span></p>
+    <p class="note mono">La cordillera de hoy: cada cumbre es un proyecto en marcha. Pasa por encima para ver su ficha. <span class="swipe">Desliza para ver todos →</span></p>
   </div>"""
     body = f"""
 <section class="page-head with-topo">
   {contour_svg(seed=11, peaks=[(0.85, 0.3, 0.9)], cls="topo topo-s")}
   {breadcrumbs_html([("Inicio", "/"), ("Proyectos", "/proyectos/")])}
   <h1 class="display-m">Proyectos</h1>
-  <p class="lede">Negocios y productos digitales que he puesto en marcha, los de ahora y los que ya cerraron etapa. Cada uno con su historia.</p>
-  <div class="chips" role="group" aria-label="Filtrar por estado">
-    <button type="button" class="chip" data-filter="all" aria-pressed="true">Todos <span class="mono">{len(projects)}</span></button>
-    <button type="button" class="chip" data-filter="live" aria-pressed="false">En marcha <span class="mono">{counts['live']}</span></button>
-    <button type="button" class="chip" data-filter="past" aria-pressed="false">Etapas cerradas <span class="mono">{counts['past']}</span></button>
-    <span class="view-toggle" role="group" aria-label="Vista">
+  <p class="lede">Los {len(live)} proyectos en los que trabajo ahora. Cada uno tiene su ficha con qué es, en qué punto está y su web.</p>
+  <div class="chips" role="group" aria-label="Vista">
+    <span class="view-toggle">
       <button type="button" class="chip" data-view="lista" aria-pressed="true">Lista</button>
       <button type="button" class="chip" data-view="mapa" aria-pressed="false">Mapa</button>
     </span>
   </div>
 </section>
 <section class="band tight">
-  <ul class="plist" id="proyectos">{''.join(project_row(p, "h2") for p in projects)}</ul>
+  <ul class="pcards" id="proyectos">{''.join(project_card(p, "h2") for p in live)}</ul>
   {pmap}
+</section>
+<section class="band tight">
+  <details class="past">
+    <summary><span class="kicker mono">Etapas anteriores</span><strong>{len(past)} proyectos ya cerrados</strong>
+    <span class="mono">{min(p["start"] for p in past if p["start"])}–{max((p["end"] or p["start"]) for p in past if p["start"])} · se conservan como historia</span></summary>
+    <ul class="plist compact">{''.join(project_row(p) for p in past)}</ul>
+  </details>
 </section>
 """
     ld = [person_ld(), website_ld(),
@@ -672,12 +679,12 @@ def page_blog(posts, topics):
                     f'{e(t["name"])} <span class="mono">{t["count"]}</span></a>' for t in topics)
     body = f"""
 <section class="page-head">
-  {breadcrumbs_html([("Inicio", "/"), ("Blog", "/blog/")])}
-  <p class="kicker mono">Cuaderno 2009–2014</p>
-  <h1 class="display-m">Blog</h1>
-  <p class="lede">{len(posts)} entradas sobre apps Android e iPhone, juegos, cloud, ponencias y mis primeros pasos como emprendedor. Textos originales, sin retocar.</p>
+  {breadcrumbs_html([("Inicio", "/"), ("Archivo", "/blog/")])}
+  <p class="kicker mono">Blog 2009–2014</p>
+  <h1 class="display-m">Archivo</h1>
+  <p class="lede">El blog que escribí entre 2009 y 2014: {len(posts)} entradas sobre apps, juegos, cloud y mis primeros negocios. La mayoría de aquellos proyectos ya no existen; los textos se conservan tal cual. Lo que hago hoy está en <a href="/proyectos/">Proyectos</a>.</p>
   <form class="finder" role="search" action="/blog/" method="get" id="buscar">
-    <label class="mono" for="q">Buscar en el blog <kbd>/</kbd></label>
+    <label class="mono" for="q">Buscar en el archivo <kbd>/</kbd></label>
     <div class="finder-row">{ICON_SEARCH}<input id="q" name="q" type="search" autocomplete="off" placeholder="aquadroid, nfc, startup…"></div>
     <p class="result-count mono" aria-live="polite"></p>
   </form>
@@ -691,7 +698,7 @@ def page_blog(posts, topics):
     ld = [person_ld(), website_ld(),
           {"@type": "Blog", "@id": f"{SITE}/blog/#blog", "url": abs_url("/blog/"), "name": f"Blog de {NAME} (2009–2014)",
            "author": {"@id": f"{SITE}/#esteban"}, "inLanguage": "es-ES"},
-          breadcrumbs_ld([("Inicio", "/"), ("Blog", "/blog/")])]
+          breadcrumbs_ld([("Inicio", "/"), ("Archivo", "/blog/")])]
     return layout(path="/blog/", title=f"Blog 2009–2014: apps, juegos y emprendimiento · {NAME}",
                   description=f"Las {len(posts)} entradas del blog de Esteban Etayo entre 2009 y 2014: desarrollo Android e iOS, juegos móviles, cloud computing, ponencias y emprendimiento.",
                   body=body, section="/blog/", ld=ld)
@@ -700,7 +707,8 @@ def page_blog(posts, topics):
 def historic_note(d: date, kind="entrada"):
     age = BUILD_DATE.year - d.year
     return (f'<aside class="historic mono" role="note"><span class="dot" aria-hidden="true"></span>'
-            f'Archivo · {kind} escrita en {d.year}, hace {age} años. Se conserva el texto original.</aside>')
+            f'Archivo · {kind} escrita en {d.year}, hace {age} años. Se conserva el texto original; '
+            f'lo que cuenta puede no existir ya. <a href="/proyectos/">Lo que hago hoy</a></aside>')
 
 
 def comments_html(p):
@@ -715,17 +723,18 @@ def comments_html(p):
             f'<strong>{label}</strong><span class="mono">cerrados</span></summary><ol>{items}</ol></details></section>')
 
 
-def page_post(p):
+def page_post(p, projects):
     d = p["dt"].date()
     topic = p["topics"][0] if p["topics"] else None
-    crumbs = [("Inicio", "/"), ("Blog", "/blog/")]
+    crumbs = [("Inicio", "/"), ("Archivo", "/blog/")]
     if topic:
         crumbs.append((topic["name"], f"/tema/{topic['slug']}/"))
     crumbs.append((clip(p["title"], 40), p["path"]))
     cats = "".join(f'<a class="tag" href="/tema/{t["slug"]}/">{e(t["name"])}</a>' for t in p["topics"])
     callout = ""
     for proj in p.get("projects", []):
-        callout += (f'<aside class="callout"><span class="kicker mono">Esta entrada es parte de un proyecto</span>'
+        label = "Esta entrada es parte de un proyecto" if proj["state"] in ("activo", "pausa") else "Parte de un proyecto ya cerrado"
+        callout += (f'<aside class="callout"><span class="kicker mono">{label}</span>'
                     f'<a href="{proj["path"]}"><strong>{e(proj["name"])}</strong> · {e(proj["summary"])} {ICON_ARROW}</a></aside>')
     minutes = max(1, round(p["words"] / 220))
     nav = []
@@ -748,6 +757,7 @@ def page_post(p):
   {tags}
   {comments_html(p)}
   <nav class="post-nav" aria-label="Más entradas">{''.join(nav)}</nav>
+  {now_strip(projects)}
 </article>
 """
     desc = p["description"] or clip(p["text"], 155)
@@ -771,7 +781,7 @@ def page_post(p):
                   body_class="is-post")
 
 
-def page_static(pg, projects):
+def page_static(pg, projects, posts):
     extra, intro, crumbs = "", "", [("Inicio", "/"), (pg["title"], pg["path"])]
     if pg["slug"] == "sobre-mi":
         live = [p for p in projects if p["state"] in ("activo", "pausa")]
@@ -779,7 +789,9 @@ def page_static(pg, projects):
 <section class="today">
   <p class="kicker mono">Hoy · {BUILD_DATE.year}</p>
   <p class="lede">Ingeniero informático por la Universidad de Zaragoza y emprendedor digital desde la Ribera de Navarra. Ahora mismo llevo {len(live)} proyectos en marcha.</p>
-  <ul class="plist compact">{''.join(project_row(p) for p in live[:6])}</ul>
+  <ul class="plist compact">{''.join(project_row(p) for p in live)}</ul>
+  <h2 class="kicker mono camino">Mi camino, de 2009 a hoy</h2>
+  {timeline_html(posts, projects)}
   <p class="note mono">Debajo, el texto de «Sobre mí» tal como lo dejé en 2013.</p>
 </section>"""
     if pg["slug"] == "mis-aplicaciones":
@@ -819,7 +831,7 @@ def page_topics(topics):
     items = "".join(f'<li><a href="/tema/{t["slug"]}/"><span class="tname">{e(t["name"])}</span>'
                     f'<span class="mono">{t["count"]} {"entrada" if t["count"] == 1 else "entradas"}</span>{ICON_ARROW}</a></li>'
                     for t in topics)
-    crumbs = [("Inicio", "/"), ("Blog", "/blog/"), ("Temas", "/temas/")]
+    crumbs = [("Inicio", "/"), ("Archivo", "/blog/"), ("Temas", "/temas/")]
     body = f"""
 <section class="page-head">{breadcrumbs_html(crumbs)}<h1 class="display-m">Temas</h1>
 <p class="lede">Los {len(topics)} temas del blog entre 2009 y 2014.</p></section>
@@ -840,7 +852,7 @@ TOPIC_INTRO = {
 def page_topic(t, posts):
     items = [p for p in posts if any(x["slug"] == t["slug"] for x in p["topics"])]
     items.sort(key=lambda p: p["dt"], reverse=True)
-    crumbs = [("Inicio", "/"), ("Blog", "/blog/"), (t["name"], f"/tema/{t['slug']}/")]
+    crumbs = [("Inicio", "/"), ("Archivo", "/blog/"), (t["name"], f"/tema/{t['slug']}/")]
     intro = TOPIC_INTRO.get(t["slug"], f"Entradas del blog sobre {t['name']} escritas entre 2009 y 2014.")
     body = f"""
 <section class="page-head">{breadcrumbs_html(crumbs)}<p class="kicker mono">Tema · {len(items)} {"entrada" if len(items) == 1 else "entradas"}</p>
@@ -956,9 +968,9 @@ def build(out: Path, copy_media=True):
         write(out, p["path"], page_project(p, projects))
     write(out, "/blog/", page_blog(posts, topics))
     for p in posts:
-        write(out, p["path"], page_post(p))
+        write(out, p["path"], page_post(p, projects))
     for pg in pages.values():
-        write(out, pg["path"], page_static(pg, projects))
+        write(out, pg["path"], page_static(pg, projects, posts))
     write(out, "/temas/", page_topics(topics))
     for t in topics:
         write(out, f"/tema/{t['slug']}/", page_topic(t, posts))
