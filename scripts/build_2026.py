@@ -296,10 +296,10 @@ def person_ld():
         "name": NAME,
         "url": f"{SITE}/",
         "image": f"{SITE}/media/2010/06/fotoMia.jpg",
-        "jobTitle": "Emprendedor digital",
+        "jobTitle": "Emprendedor digital e inversor inmobiliario",
         "homeLocation": {"@type": "Place", "name": "Fustiñana, Navarra, España"},
         "alumniOf": {"@type": "CollegeOrUniversity", "name": "Universidad de Zaragoza"},
-        "knowsAbout": ["Comercio electrónico", "Desarrollo de apps móviles", "SEO", "Turismo digital"],
+        "knowsAbout": ["Comercio electrónico", "Desarrollo de apps móviles", "SEO", "Turismo digital", "Inversión inmobiliaria", "Alquiler turístico"],
         "sameAs": ["https://github.com/eetayo"],
     }
 
@@ -380,7 +380,7 @@ def layout(*, path, title, description, body, section=None, og_type="website", i
     footer = (
         '<footer class="foot"><div class="foot-inner">'
         f'<div class="foot-sign"><span class="mark">EE</span><p><strong>{NAME}</strong><br>'
-        'Emprendedor digital. Escribiendo desde 2009.</p></div>'
+        'Emprendedor digital e inversor inmobiliario. Escribiendo desde 2009.</p></div>'
         '<nav class="foot-nav" aria-label="Pie">'
         '<a href="/proyectos/">Proyectos</a><a href="/blog/">Archivo 2009–2014</a><a href="/temas/">Temas</a>'
         '<a href="/sobre-mi/">Sobre mí</a><a href="/contactar/">Contacto</a><a href="/feed.xml">RSS</a></nav>'
@@ -499,7 +499,6 @@ def now_strip(projects, limit=4):
 
 def page_home(posts, projects):
     live = live_projects(projects)
-    sectors = sorted({p["sector"].split(" · ")[0] for p in live if p["sector"]})
     body = f"""
 <section class="hero" data-probe>
   {contour_svg()}
@@ -507,7 +506,7 @@ def page_home(posts, projects):
   <div class="hero-inner">
     <p class="kicker mono">{COORDS} · {PLACE}</p>
     <h1 class="display">Esteban<br>Etayo</h1>
-    <p class="claim">Emprendedor digital en la Ribera de Navarra. Ahora mismo llevo <em>{len(live)} proyectos en marcha</em>, de {', '.join(s.lower() for s in sectors[:-1])} y {sectors[-1].lower()}.</p>
+    <p class="claim">Padre, emprendedor digital e inversor inmobiliario en la Ribera de Navarra. Inquieto por naturaleza: ahora mismo llevo <em>{len(live)} proyectos en marcha</em>.</p>
     <p class="cta"><a class="btn" href="#ahora">Ver lo que hago {ICON_ARROW}</a><a class="btn ghost" href="/contactar/">Escríbeme</a></p>
   </div>
 </section>
@@ -535,8 +534,8 @@ def page_home(posts, projects):
           {"@type": "ItemList", "name": "Proyectos en marcha", "itemListElement": [
               {"@type": "ListItem", "position": i + 1, "url": abs_url(p["path"]), "name": p["name"]}
               for i, p in enumerate(live)]}]
-    return layout(path="/", title=f"{NAME} · Emprendedor digital en Navarra",
-                  description=(f"Soy Esteban Etayo, emprendedor digital en la Ribera de Navarra. "
+    return layout(path="/", title=f"{NAME} · Emprendedor digital e inversor inmobiliario en Navarra",
+                  description=(f"Soy Esteban Etayo, emprendedor digital e inversor inmobiliario en la Ribera de Navarra. "
                                f"Proyectos en marcha: {', '.join(p['name'] for p in live[:5])}."),
                   body=body, section="/", ld=ld, body_class="home", og_type="profile")
 
@@ -812,7 +811,8 @@ def page_static(pg, projects, posts):
         intro = f"""
 <section class="today">
   <p class="kicker mono">Hoy · {BUILD_DATE.year}</p>
-  <p class="lede">Ingeniero informático por la Universidad de Zaragoza y emprendedor digital desde la Ribera de Navarra. Ahora mismo llevo {len(live)} proyectos en marcha.</p>
+  <p class="lede">Soy padre de Miguel Ángel, un niño maravilloso de 7 años, y marido de Vivi, una magnífica médica con la que comparto valores de vida.</p>
+  <p class="lede">Soy inquieto por naturaleza: me encanta analizarlo todo y optimizar al máximo los negocios. Soy inversor inmobiliario y gestiono inmuebles de alquiler turístico y casas rurales. Y soy emprendedor digital desde la Ribera de Navarra: ahora mismo llevo {len(live)} proyectos en marcha.</p>
   <ul class="plist compact">{''.join(project_row(p) for p in live)}</ul>
   <h2 class="kicker mono camino">Mi camino, de 2009 a hoy</h2>
   {timeline_html(posts, projects)}
@@ -836,7 +836,7 @@ def page_static(pg, projects, posts):
 </article>
 """
     titles = {
-        "sobre-mi": (f"Sobre mí · {NAME}", f"Quién es Esteban Etayo: ingeniero informático y emprendedor digital en Fustiñana, Navarra. Proyectos actuales y trayectoria desde 2009."),
+        "sobre-mi": (f"Sobre mí · {NAME}", f"Quién es Esteban Etayo: padre, emprendedor digital e inversor inmobiliario en Fustiñana, Navarra. Proyectos actuales y trayectoria desde 2009."),
         "contactar": (f"Contacto · {NAME}", "Cómo contactar con Esteban Etayo para hablar de proyectos, colaboraciones o cualquier idea."),
         "mis-aplicaciones": (f"Mis aplicaciones Android e iOS (2010–2013) · {NAME}", "Las apps y juegos móviles que publiqué entre 2010 y 2013: Logic Labyrinth, Aquadroid, ChristmasRun y más."),
     }
