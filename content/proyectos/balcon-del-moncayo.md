@@ -1,12 +1,19 @@
 ---
 nombre: Balcón del Moncayo
-resumen: Turismo rural a los pies del Moncayo.
+resumen: Casa rural de 1900 rehabilitada en Fustiñana, en la Ribera de Navarra, para familias o grupos de amigos. Orientada al sur, con vistas a la huerta y al Moncayo.
 estado: activo
 url: https://balcondelmoncayo.com
-sector: Turismo
-rol: Fundador
+sector: Turismo rural · alojamiento
+rol: Propietario
 destacado: sí
 orden: 30
-provisional: sí
 ---
-Texto provisional, pendiente de tu descripción.
+Balcón del Moncayo es la casa rural que hemos rehabilitado en Fustiñana para alojar a familias o grupos de amigos.
+
+Es una casa de 1900 rehabilitada con mimo en plena Ribera de Navarra. Su orientación sur llena las estancias de luz y abre la mirada hacia la huerta y el Moncayo.
+
+Aquí vienes a desayunar sin prisa, compartir tiempo, descubrir paisajes muy distintos y volver a una casa que es únicamente para vosotros durante la estancia.
+
+Muy cerca están las Bardenas Reales, que cuento en [ViveBardenas](/proyectos/vivebardenas/).
+
+[Conoce la casa en balcondelmoncayo.com](https://balcondelmoncayo.com/).
