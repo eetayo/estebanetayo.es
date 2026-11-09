@@ -8,6 +8,9 @@ sector: Herramientas · vacaciones
 rol: Creador
 destacado: sí
 orden: 15
+ancla: calendario de puentes y vacaciones 2027
+relacionados: balcon-del-moncayo, vivebardenas
+claves: vacaciones, festivo, puente, calendario, verano, viaje
 ---
 Cada año hago lo mismo: abro el calendario, busco los festivos y me pongo a contar con los dedos qué días pedir para encadenar puentes. Así que he hecho una herramienta que lo hace por mí, y ahora también por ti.
 

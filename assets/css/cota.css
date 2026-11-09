@@ -470,6 +470,20 @@ svg.arrow, .icon-btn svg { width: 1.1em; height: 1.1em; fill: none; stroke: curr
 .foot-nav a { text-decoration: none; min-height: 2.75rem; display: inline-flex; align-items: center; }
 .foot-nav a:hover { color: var(--red); }
 .coords { color: var(--muted); margin: 0; }
+.foot-proj { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.1rem 1.4rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--line); }
+.foot-proj p { margin: 0 0.5rem 0 0; font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); flex-basis: 100%; }
+.foot-proj a { text-decoration: none; font-size: 1.05rem; min-height: 2.5rem; display: inline-flex; align-items: center; }
+.foot-proj a:hover { color: var(--red); }
+
+/* Proyectos relacionados y enlace a la web del proyecto */
+.go { margin-top: 1.5rem; }
+.relp { max-width: var(--read); margin: 3rem 0 0; }
+.relp ul { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: 1rem 2rem; }
+.relp li { display: flex; flex-direction: column; gap: 0.35rem; padding-top: 1rem; border-top: 1px solid var(--ink); }
+.relp .rp-name { font-size: 1.5rem; text-decoration: none; line-height: 1.15; }
+.relp .rp-name:hover { color: var(--red); }
+.relp span { color: var(--muted); line-height: 1.45; }
+.relp .rp-out { font-size: 0.78rem; color: var(--ink); text-decoration-color: var(--red); }
 .theme-toggle { justify-self: start; background: none; border: 0; color: var(--muted); padding: 0.5rem 0; min-height: 2.75rem; cursor: pointer; }
 .theme-toggle span { padding: 0.1rem 0.15rem; }
 :root:not([data-theme="dark"]) .theme-toggle .sun { color: var(--ink); text-decoration: underline; text-decoration-color: var(--red); }

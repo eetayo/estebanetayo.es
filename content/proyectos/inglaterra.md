@@ -6,6 +6,9 @@ url: https://www.inglaterra.net
 sector: Viajes · guía digital
 rol: Editor
 orden: 70
+ancla: guía de viajes a Inglaterra en español
+relacionados: roomtoroll, puentazo
+claves: inglaterra, londres, viaje, viajes, low cost, vuelo
 ---
 Inglaterra.net es una guía de viajes en español para descubrir Inglaterra y organizar tu escapada con más confianza. Desde los lugares imprescindibles de Londres hasta ciudades históricas como Bath, Oxford o York, encontrarás ideas para elegir tu destino y aprovechar cada día.
 

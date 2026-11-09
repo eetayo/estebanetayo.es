@@ -7,6 +7,9 @@ sector: Turismo rural · alojamiento
 rol: Propietario
 destacado: sí
 orden: 30
+ancla: casa rural en la Ribera de Navarra
+relacionados: vivebardenas, puentazo
+claves: casa rural, rural, navarra, fustiñana, moncayo, alojamiento, toprural, rentalia
 ---
 Balcón del Moncayo es la casa rural que hemos rehabilitado en Fustiñana para alojar a familias o grupos de amigos.
 

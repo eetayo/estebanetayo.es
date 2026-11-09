@@ -202,6 +202,9 @@ def load_projects(posts_by_slug):
             "featured": yes("destacado"),
             "draft": yes("provisional"),
             "video": meta.get("video", ""),
+            "anchor": meta.get("ancla", ""),
+            "related": [x.strip() for x in meta.get("relacionados", "").split(",") if x.strip()],
+            "keys": [x.strip().lower() for x in meta.get("claves", "").split(",") if x.strip()],
             "video_title": meta.get("video_titulo", ""),
             "order": int(meta.get("orden", "50") or 50),
             "posts": [posts_by_slug[s] for s in related],
@@ -214,7 +217,56 @@ def load_projects(posts_by_slug):
     for p in projects:
         for post in p["posts"]:
             post.setdefault("projects", []).append(p)
+    by_slug = {p["slug"]: p for p in projects}
+    for p in projects:
+        bad = [r for r in p["related"] if r not in by_slug]
+        if bad:
+            raise SystemExit(f"{p['slug']}: relacionados que no existen: {', '.join(bad)}")
+        p["related"] = [by_slug[r] for r in p["related"]]
     return projects
+
+
+# Enlaces de entradas antiguas a dominios propios que ya no existen: se apuntan a lo que
+# vive hoy (la ficha o la web nueva) para no regalar autoridad a dominios caídos.
+OWN_LINKS = [
+    (r"https?://(?:www\.)?(?:play\.google\.com/store/apps/details\?id=com\.xocolabs\.labyrinthGame(?:Lite)?[^\"]*)",
+     "https://play.google.com/store/apps/details?id=com.eetayo.logiclabyrinth"),
+    (r"http://movernos\.com/?", "https://blog.movernos.com/"),
+    (r"http://(?:www\.)?appstonic\.com/?", "/proyectos/appstonic/"),
+    (r"http://lowviajes\.com/[^\"]*", "/proyectos/lowviajes/"),
+    (r"http://xocolabs\.com/?", "/proyectos/xocolabs/"),
+]
+
+
+def fix_own_links(html: str) -> str:
+    for pat, url in OWN_LINKS:
+        html = re.sub(r'href="' + pat + '"', f'href="{url}"', html)
+    return html
+
+
+def relevant_projects(post, projects, limit=3):
+    """Proyectos en marcha más afines a una entrada antigua, por tema y palabras clave."""
+    title = post["title"].lower()
+    text = post.get("text", "").lower()
+    topics = " ".join(t["name"].lower() for t in post.get("topics", [])) + " " + " ".join(x.lower() for x in post.get("tags", []))
+    scored = []
+    for p in live_projects(projects):
+        if p["draft"]:
+            continue
+        score = 0
+        for k in p["keys"]:
+            score += 4 * (k in topics) + 3 * (k in title) + min(text.count(k), 3)
+        if p in post.get("projects", []):
+            score += 20
+        scored.append((score, -projects.index(p), p))
+    scored.sort(key=lambda x: (x[0], x[1]), reverse=True)
+    picked = [p for sc, _, p in scored if sc > 0][:limit]
+    for sc, _, p in scored:
+        if len(picked) >= limit:
+            break
+        if p not in picked and p["featured"]:
+            picked.append(p)
+    return picked
 
 
 def years_label(p) -> str:
@@ -379,6 +431,7 @@ def layout(*, path, title, description, body, section=None, og_type="website", i
     )
     footer = (
         '<footer class="foot"><div class="foot-inner">'
+        + FOOT_PROJECTS +
         f'<div class="foot-sign"><span class="mark">EE</span><p><strong>{NAME}</strong><br>'
         'Emprendedor digital e inversor inmobiliario. Escribiendo desde 2009.</p></div>'
         '<nav class="foot-nav" aria-label="Pie">'
@@ -490,9 +543,9 @@ def timeline_html(posts, projects):
             f'<div class="tl-panels">{panels}</div></div>')
 
 
-def now_strip(projects, limit=4):
-    live = live_projects(projects)[:limit]
-    links = "".join(f'<a href="{p["path"]}"><strong>{e(p["name"])}</strong><span>{e(p["sector"])}</span></a>' for p in live)
+def now_strip(projects, limit=4, post=None):
+    live = relevant_projects(post, projects, 3) if post else live_projects(projects)[:limit]
+    links = "".join(f'<a href="{p["path"]}"><strong>{e(p["name"])}</strong><span>{e(p["anchor"] or p["sector"])}</span></a>' for p in live)
     return (f'<aside class="now-strip" aria-label="Lo que hago hoy"><p class="kicker mono">Hoy · lo que hago ahora</p>'
             f'<div class="now-links">{links}</div><a class="more" href="/proyectos/">Todos mis proyectos {ICON_ARROW}</a></aside>')
 
@@ -648,6 +701,17 @@ def page_project(p, projects):
              if p["draft"] else "")
     visit = (f'<a class="btn" href="{e(p["url"])}" rel="noopener">Visitar {e(domain(p["url"]))} {ICON_OUT}</a>'
              if p["url"] else "")
+    go = ""
+    if p["url"] and p["anchor"] and p["url"].rstrip("/") not in p["body"]:
+        go = f'<p class="go"><span class="kicker mono">En la web</span> <a href="{e(p["url"])}">{e(p["anchor"])}</a> {ICON_OUT}</p>'
+    rel = ""
+    if p["related"]:
+        items = "".join(
+            f'<li><a class="rp-name" href="{r["path"]}">{e(r["name"])}</a>'
+            f'<span>{e(r["summary"])}</span>'
+            + (f'<a class="rp-out mono" href="{e(r["url"])}">{e(r["anchor"] or domain(r["url"]))} {ICON_OUT}</a>' if r["url"] else "")
+            + "</li>" for r in p["related"])
+        rel = f'<section class="relp"><h2 class="kicker mono">Proyectos relacionados</h2><ul>{items}</ul></section>'
     crumbs = [("Inicio", "/"), ("Proyectos", "/proyectos/"), (p["name"], p["path"])]
     body = f"""
 <article class="project">
@@ -661,10 +725,11 @@ def page_project(p, projects):
   </header>
   <div class="project-grid">
     <dl class="facts">{facts_html}</dl>
-    <div class="prose">{draft}{p['body']}</div>
+    <div class="prose">{draft}{p['body']}{go}</div>
   </div>
   {video_html(p)}
   {miles}
+  {rel}
   {origin}
   <nav class="next-project" aria-label="Siguiente proyecto"><a href="{nxt['path']}"><span class="kicker mono">Siguiente proyecto</span><strong>{e(nxt['name'])}</strong>{ICON_ARROW}</a></nav>
 </article>
@@ -776,11 +841,11 @@ def page_post(p, projects):
   </header>
   {historic_note(d)}
   {callout}
-  <div class="prose">{p['html']}</div>
+  <div class="prose">{fix_own_links(p['html'])}</div>
   {tags}
   {comments_html(p)}
   <nav class="post-nav" aria-label="Más entradas">{''.join(nav)}</nav>
-  {now_strip(projects)}
+  {now_strip(projects, post=p)}
 </article>
 """
     desc = p["description"] or clip(p["text"], 155)
@@ -811,8 +876,8 @@ def page_static(pg, projects, posts):
         intro = f"""
 <section class="today">
   <p class="kicker mono">Hoy · {BUILD_DATE.year}</p>
-  <p class="lede">Soy padre de Miguel Ángel, un niño maravilloso de 7 años, y marido de Vivi, una magnífica médica con la que comparto valores de vida.</p>
-  <p class="lede">Soy inquieto por naturaleza: me encanta analizarlo todo y optimizar al máximo los negocios. Soy inversor inmobiliario y gestiono inmuebles de alquiler turístico y casas rurales. Y soy emprendedor digital desde la Ribera de Navarra: ahora mismo llevo {len(live)} proyectos en marcha.</p>
+  <p class="lede">Soy padre de Miguel Ángel, un niño maravilloso de 7 años con el que he creado <a href="/proyectos/juegapop/">JuegaPop</a>, y marido de Vivi, una magnífica médica con la que comparto valores de vida.</p>
+  <p class="lede">Soy inquieto por naturaleza: me encanta analizarlo todo y optimizar al máximo los negocios. Soy inversor inmobiliario y gestiono inmuebles de alquiler turístico y casas rurales, como <a href="/proyectos/balcon-del-moncayo/">El Balcón del Moncayo</a>. Y soy emprendedor digital desde la Ribera de Navarra: ahora mismo llevo <a href="/proyectos/">{len(live)} proyectos en marcha</a>.</p>
   <ul class="plist compact">{''.join(project_row(p) for p in live)}</ul>
   <h2 class="kicker mono camino">Mi camino, de 2009 a hoy</h2>
   {timeline_html(posts, projects)}
@@ -831,7 +896,7 @@ def page_static(pg, projects, posts):
   </header>
   {intro}
   {historic_note(date(year, 1, 1), 'página').replace('escrita en', 'editada por última vez en')}
-  <div class="prose">{pg['html']}</div>
+  <div class="prose">{fix_own_links(pg['html'])}</div>
   <p class="tags mono">Última edición: {e(pg.get('modified_label', ''))}</p>
 </article>
 """
@@ -971,10 +1036,20 @@ def write(out: Path, path: str, content: str):
     target.write_text(content, "utf-8")
 
 
+FOOT_PROJECTS = ""
+
+
+def foot_projects(projects):
+    links = "".join(f'<a href="{p["path"]}">{e(p["name"])}</a>' for p in live_projects(projects) if not p["draft"])
+    return f'<nav class="foot-proj" aria-label="Proyectos en marcha"><p class="mono">Proyectos en marcha</p>{links}</nav>'
+
+
 def build(out: Path, copy_media=True):
+    global FOOT_PROJECTS
     posts, pages = load_archive()
     by_slug = {p["slug"]: p for p in posts}
     projects = load_projects(by_slug)
+    FOOT_PROJECTS = foot_projects(projects)
     tcount = Counter()
     names = {}
     for p in posts:

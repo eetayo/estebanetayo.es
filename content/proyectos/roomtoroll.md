@@ -8,6 +8,9 @@ sector: Viajes · accesibilidad
 rol: Creador
 destacado: sí
 orden: 18
+ancla: hoteles adaptados para silla de ruedas
+relacionados: movernos, inglaterra
+claves: accesib, discapacidad, silla de ruedas, hotel, viaje, viajes, cities4all
 ---
 Llevo años viajando en silla de ruedas y siempre me hago la misma pregunta: ¿este hotel está adaptado de verdad? ¿Tiene grúa?
 

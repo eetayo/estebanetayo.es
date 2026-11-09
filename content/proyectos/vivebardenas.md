@@ -7,6 +7,9 @@ sector: Turismo · guía digital
 rol: Fundador
 destacado: sí
 orden: 20
+ancla: guía para visitar las Bardenas Reales
+relacionados: balcon-del-moncayo, puentazo
+claves: bardenas, navarra, turismo, ruta, viaje, viajes, geolocaliza, mapa
 ---
 ViveBardenas es un proyecto digital de información y promoción turística dedicado a las Bardenas Reales y su entorno. Su propósito es ayudar a los viajeros a descubrir el destino y organizar su visita con información clara, práctica y contrastada.
 

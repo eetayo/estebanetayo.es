@@ -9,6 +9,9 @@ rol: Creador y desarrollador
 destacado: sí
 orden: 25
 posts: mi-1º-gran-juego-ya-esta-aqui-logic-labyrinth, trailer-de-¡¡logic-labyrinth
+ancla: Logic Labyrinth, juego de lógica gratis para Android
+relacionados: juegapop, xocolabs
+claves: labyrinth, logic, juego, juegos, android, puzzle, android market
 ---
 Logic Labyrinth fue finalista entre las tres mejores apps freelance del año en el evento de Ideateca de 2012. En 2026, el juego regresa a Google Play con un diseño renovado y un relanzamiento que mantiene su esencia: poner a prueba tu lógica. Es totalmente gratuito y sin anuncios.
 

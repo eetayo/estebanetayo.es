@@ -7,5 +7,6 @@ sector: Viajes
 rol: Fundador
 orden: 80
 posts: lowviajes-un-portal-de-viajes-lowcost
+relacionados: inglaterra, vivebardenas
 ---
 En 2013 empecé a probar el desarrollo de portales de contenido con Lowviajes, un buscador de viajes baratos. Fue el paso previo a montar una tienda online.

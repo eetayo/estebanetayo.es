@@ -9,6 +9,9 @@ rol: Fundador
 destacado: sí
 orden: 2
 posts: la-ortopedia-online-movernos-com-empieza-rodar
+ancla: noticias sobre discapacidad y ayudas técnicas
+relacionados: roomtoroll
+claves: discapacidad, accesib, ortopedia, silla de ruedas, movilidad, technosite, drt4all
 ---
 Movernos nació en 2014 como una ortopedia online. Durante cinco años vendimos de todo en ortopedia estándar: sillas de ruedas, muletas, andadores, cubiertos adaptados y muchas otras ayudas técnicas, con envío a toda España.
 

@@ -10,6 +10,9 @@ destacado: sí
 orden: 1
 video: wzIZUNNBEGk
 video_titulo: Mi hijo y yo creamos 45 juegos educativos en una semana
+ancla: juegos educativos gratis para niños
+relacionados: logic-labyrinth, puentazo
+claves: juego, juegos, educa, niños, colegio, aprender
 ---
 JuegaPop nació una noche en la que mi hijo Miguel Ángel me propuso hacer nuestros propios juegos. Hace quince años yo hacía videojuegos para móvil; esta vez los hicimos juntos, con ayuda de la inteligencia artificial, y en una semana teníamos 45 juegos educativos.
 
