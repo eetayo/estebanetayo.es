@@ -201,6 +201,8 @@ def load_projects(posts_by_slug):
             "role": meta.get("rol", ""),
             "featured": yes("destacado"),
             "draft": yes("provisional"),
+            "video": meta.get("video", ""),
+            "video_title": meta.get("video_titulo", ""),
             "order": int(meta.get("orden", "50") or 50),
             "posts": [posts_by_slug[s] for s in related],
             "body": markdown(body),
@@ -605,6 +607,23 @@ def page_projects(projects):
                   body=body, section="/proyectos/", ld=ld)
 
 
+ICON_PLAY = '<svg class="play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"/></svg>'
+
+
+def video_html(p):
+    """Vídeo de YouTube: un enlace con aspecto de reproductor; el JS lo cambia por el
+    reproductor sin cookies al pulsar (y sin JS sigue siendo un enlace a YouTube)."""
+    if not p.get("video"):
+        return ""
+    vid = e(p["video"])
+    title = e(p.get("video_title") or f"Vídeo sobre {p['name']}")
+    return (f'<section class="pvideo"><h2 class="kicker mono">La historia en vídeo</h2>'
+            f'<a class="video-card" href="https://www.youtube.com/watch?v={vid}" rel="noopener" data-video="{vid}">'
+            f'{contour_svg(seed=len(vid) * 7, peaks=[(0.75, 0.45, 0.8)], cls="topo topo-v")}'
+            f'<span class="vc-play">{ICON_PLAY}</span><span class="vc-text"><span class="mono">YouTube</span>'
+            f'<strong>{title}</strong></span></a></section>')
+
+
 def page_project(p, projects):
     i = projects.index(p)
     nxt = projects[(i + 1) % len(projects)]
@@ -641,6 +660,7 @@ def page_project(p, projects):
     <dl class="facts">{facts_html}</dl>
     <div class="prose">{draft}{p['body']}</div>
   </div>
+  {video_html(p)}
   {miles}
   {origin}
   <nav class="next-project" aria-label="Siguiente proyecto"><a href="{nxt['path']}"><span class="kicker mono">Siguiente proyecto</span><strong>{e(nxt['name'])}</strong>{ICON_ARROW}</a></nav>

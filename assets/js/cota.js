@@ -306,6 +306,25 @@
     });
   }
 
+  /* ---------- Vídeo: se carga el reproductor sin cookies solo al pulsar ---------- */
+  var ownSite = /(^|\.)estebanetayo\.es$|\.pages\.dev$|^localhost$|^127\.0\.0\.1$/.test(location.hostname);
+  if (ownSite) {
+    $$(".video-card[data-video]").forEach(function (card) {
+      card.addEventListener("click", function (ev) {
+        ev.preventDefault();
+        var frame = document.createElement("div");
+        frame.className = "video-frame";
+        var iframe = document.createElement("iframe");
+        iframe.src = "https://www.youtube-nocookie.com/embed/" + encodeURIComponent(card.dataset.video) + "?autoplay=1&rel=0";
+        iframe.title = (card.querySelector("strong") || {}).textContent || "Vídeo";
+        iframe.allow = "autoplay; encrypted-media; picture-in-picture; fullscreen";
+        iframe.allowFullscreen = true;
+        frame.appendChild(iframe);
+        card.replaceWith(frame);
+      });
+    });
+  }
+
   /* ---------- Visor de imágenes ---------- */
   var links = $$(".prose a").filter(function (a) {
     return /\.(png|jpe?g|gif|webp)(\?.*)?$/i.test(a.getAttribute("href") || "");

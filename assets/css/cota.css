@@ -685,6 +685,25 @@ mark { background: color-mix(in srgb, var(--red) 22%, transparent); color: inher
 .today .camino { margin-top: 3rem; }
 .today .tl { margin-bottom: 1rem; }
 
+
+/* Vídeo de proyecto */
+.pvideo { margin: 4rem 0 0 calc(15rem + 3rem); max-width: 48rem; }
+.video-card {
+  position: relative; display: flex; align-items: flex-end; gap: 1.25rem; overflow: hidden;
+  aspect-ratio: 16 / 9; max-width: 100%; padding: 1.5rem; text-decoration: none;
+  background: var(--paper-2); border: 1px solid var(--ink);
+}
+.video-card .topo-v { position: absolute; inset: 0; width: 100%; height: 100%; }
+.vc-play { position: relative; display: grid; place-items: center; width: 4rem; height: 4rem; border-radius: 50%; background: var(--ink); color: var(--paper); flex: none; transition: background 0.2s, transform 0.2s; }
+.vc-play .play { width: 1.6rem; height: 1.6rem; fill: currentColor; margin-left: 0.2rem; }
+.vc-text { position: relative; display: flex; flex-direction: column; gap: 0.2rem; }
+.vc-text .mono { color: var(--red); }
+.vc-text strong { font-weight: 400; font-size: clamp(1.2rem, 2.2vw, 1.6rem); line-height: 1.2; letter-spacing: -0.01em; max-width: 26rem; }
+.video-card:hover .vc-play { background: var(--red); transform: scale(1.06); }
+.video-frame { position: relative; aspect-ratio: 16 / 9; max-width: 100%; border: 1px solid var(--ink); }
+.video-frame iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+@media (max-width: 860px) { .pvideo { margin-left: 0; } }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
   .topo path { stroke-dashoffset: 0; }
