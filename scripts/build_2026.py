@@ -226,6 +226,10 @@ def years_label(p) -> str:
 
 
 def domain(url: str) -> str:
+    if "play.google.com" in url:
+        return "Google Play"
+    if "apps.apple.com" in url:
+        return "App Store"
     return re.sub(r"^https?://(www\.)?", "", url).rstrip("/")
 
 
