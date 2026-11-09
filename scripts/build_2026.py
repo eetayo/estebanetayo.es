@@ -1044,11 +1044,21 @@ def foot_projects(projects):
     return f'<nav class="foot-proj" aria-label="Proyectos en marcha"><p class="mono">Proyectos en marcha</p>{links}</nav>'
 
 
-def build(out: Path, copy_media=True):
+def build(out: Path, copy_media=True, drafts=False):
     global FOOT_PROJECTS
     posts, pages = load_archive()
     by_slug = {p["slug"]: p for p in posts}
     projects = load_projects(by_slug)
+    if not drafts:
+        # En producción no se publican las fichas con texto provisional.
+        for p in projects:
+            if p["draft"]:
+                for post in p["posts"]:
+                    post["projects"].remove(p)
+                for q in projects:
+                    if p in q["related"]:
+                        q["related"].remove(p)
+        projects = [p for p in projects if not p["draft"]]
     FOOT_PROJECTS = foot_projects(projects)
     tcount = Counter()
     names = {}
@@ -1123,10 +1133,11 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", default=str(ROOT / "dist"))
     ap.add_argument("--preview", help="genera una copia con enlaces relativos en este directorio")
+    ap.add_argument("--borradores", action="store_true", help="incluye las fichas provisionales (solo vista previa)")
     ap.add_argument("--media-base", default="", help="servir /media/ desde otro dominio")
     args = ap.parse_args()
     if args.preview:
-        out = build(Path(args.preview), copy_media=False)
+        out = build(Path(args.preview), copy_media=False, drafts=args.borradores)
         relativize(out, args.media_base)
         if not args.media_base:
             # Copia solo las imágenes que usan las páginas.
