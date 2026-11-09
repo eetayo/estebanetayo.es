@@ -1,21 +1,23 @@
 ---
 nombre: Movernos
-resumen: Ortopedia online nacida en 2014. Hoy sigue viva como blog de ayudas técnicas, movilidad y discapacidad.
+resumen: Portal de noticias para personas con discapacidad: leyes, derechos y ayudas técnicas nuevas, cada día. Empezó en 2014 como ortopedia online.
 estado: activo
 inicio: 2014
 url: https://blog.movernos.com
-sector: Salud · comercio electrónico
+sector: Discapacidad · noticias
 rol: Fundador
 destacado: sí
-orden: 10
+orden: 2
 posts: la-ortopedia-online-movernos-com-empieza-rodar
 ---
-Movernos empezó en marzo de 2014 como una tienda online de ortopedia: sillas de ruedas, scooters y ayudas técnicas con envío a toda España. Fue mi primera experiencia completa de comercio electrónico, con todo lo que eso trae: proveedores, logística, atención al cliente y posicionamiento.
+Movernos nació en 2014 como una ortopedia online. Durante cinco años vendimos de todo en ortopedia estándar: sillas de ruedas, muletas, andadores, cubiertos adaptados y muchas otras ayudas técnicas, con envío a toda España.
 
-La tienda cerró su etapa, pero el blog que nació con ella sigue publicado en blog.movernos.com, con guías sobre el certificado de discapacidad, ayudas técnicas y movilidad.
+Tras el cierre de la tienda, Movernos se ha reinventado como un portal de noticias para personas con discapacidad. Cuenta lo que de verdad les afecta: nuevas leyes y derechos, y ayudas técnicas nuevas, como sillas de ruedas innovadoras o nuevos sistemas de conducción adaptada.
+
+Cada día se publican noticias nuevas. Detrás hay una investigación a fondo de lo que va saliendo sobre el tema, y una inteligencia artificial detecta lo más interesante para quien lo lee.
 
 ## Hitos
 
 - 2014 · Abre la ortopedia online movernos.com.
-- 2014–2020 · Más de 300 artículos en el blog.
-- 2026 · El blog se migra de WordPress a una web nueva, con las mismas direcciones.
+- 2014–2019 · Cinco años vendiendo sillas de ruedas, muletas, andadores y ayudas técnicas.
+- 2026 · Movernos se reinventa como portal de noticias diario sobre discapacidad, con ayuda de la IA.
